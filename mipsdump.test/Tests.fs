@@ -156,6 +156,16 @@ let ``Disassemble basic instructions`` () =
     Assert.Equal("xori\t$v0, $a0, 3", disassembleInstr (XORI V0 A0 (uint16 3)) noFlags)
 
 [<Fact>]
+let ``Disassemble instruction that uses pointers`` () =
+    Assert.Equal("lb\t$v0, 100($s0)", disassembleInstr (LB V0 S0 (int16 100)) noFlags)
+    Assert.Equal("lh\t$v0, -100($s0)", disassembleInstr (LH V0 S0 (int16 -100)) noFlags)
+    Assert.Equal("lwl\t$v0, 100($s0)", disassembleInstr (LWL V0 S0 (int16 100)) noFlags)
+    Assert.Equal("lw\t$v0, 100($s0)", disassembleInstr (LW V0 S0 (int16 100)) noFlags)
+    Assert.Equal("lbu\t$v0, 100($s0)", disassembleInstr (LBU V0 S0 (int16 100)) noFlags)
+    Assert.Equal("lhu\t$v0, 100($s0)", disassembleInstr (LHU V0 S0 (int16 100)) noFlags)
+    Assert.Equal("lwr\t$v0, 100($s0)", disassembleInstr (LWR V0 S0 (int16 100)) noFlags)
+
+[<Fact>]
 let ``Disassemble instructions with aliases`` () =
     Assert.Equal("sll\t$zero, $zero, 0", disassembleInstr NOP noFlags)
     Assert.Equal("nop", disassembleInstr NOP useAlias)
@@ -168,7 +178,13 @@ let ``Disassemble instructions with aliases`` () =
 
     Assert.Equal("subu\t$v0, $zero, $a0", disassembleInstr (NEGU V0 A0) noFlags)
     Assert.Equal("negu\t$v0, $a0", disassembleInstr (NEGU V0 A0) useAlias)
-    
+
+    Assert.Equal("addiu\t$s0, $zero, 50000", disassembleInstr (LI S0 (int16 50000)) noFlags)
+    Assert.Equal("li\t$s0, -5000", disassembleInstr (LI S0 (int16 -5000)) useAlias)
+
+    Assert.Equal("ori\t$s0, $zero, 50000", disassembleInstr (LIU S0 (uint16 50000)) noFlags)
+    Assert.Equal("li\t$s0, 50000", disassembleInstr (LIU S0 (uint16 50000)) useAlias)
+
 [<Fact>]
 let ``Disassemble unknown instructions`` () =
     Assert.Equal(".word 0xffffffff", disassembleInstr (0xffffffffu) noFlags)
