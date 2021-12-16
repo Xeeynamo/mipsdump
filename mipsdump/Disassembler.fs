@@ -26,11 +26,33 @@ let disassembleInstr (instr: uint) (flags: Flags) =
         match op with
         | Op.SPECIAL ->
             match special with
-            | Special.ADD -> $"\t{special |> string}\t${rd |> string}, ${rs |> string}, ${rt |> string}"
+            | Special.MFHI | Special.MTHI | Special.MFLO | Special.MTLO ->
+                $"\t{special |> string}\t${rd |> string}"
+            | Special.MULT | Special.MULTU | Special.DIV | Special.DIVU ->
+                $"\t{special |> string}\t${rs |> string}, ${rt |> string}"
+            | Special.SLL | Special.SRL | Special.SRA ->
+                $"\t{special |> string}\t${rd |> string}, ${rt |> string}, {shamt}"
+            | Special.ADD | Special.ADDU | Special.AND
+            | Special.XOR | Special.NOR | Special.SLT | Special.SLTU ->
+                $"\t{special |> string}\t${rd |> string}, ${rs |> string}, ${rt |> string}"
+            | Special.SLLV | Special.SRAV | Special.SRLV ->
+                $"\t{special |> string}\t${rd |> string}, ${rt |> string}, ${rs |> string}"
+            | Special.SUB ->
+                match (rs, flags.HasFlag(Flags.UseAlias)) with
+                | Reg.ZERO, true -> $"\tneg\t${rd |> string}, ${rt |> string}"
+                | _, _ -> $"\t{special |> string}\t${rd |> string}, ${rs |> string}, ${rt |> string}"
+            | Special.SUBU ->
+                match (rs, flags.HasFlag(Flags.UseAlias)) with
+                | Reg.ZERO, true -> $"\tnegu\t${rd |> string}, ${rt |> string}"
+                | _, _ -> $"\t{special |> string}\t${rd |> string}, ${rs |> string}, ${rt |> string}"
             | Special.OR ->
                 match (rt, flags.HasFlag(Flags.UseAlias)) with
                 | Reg.ZERO, true -> $"\tmove\t${rd |> string}, ${rs |> string}"
                 | _, _ -> $"\t{special |> string}\t${rd |> string}, ${rs |> string}, ${rt |> string}"
+            | Special.SYSCALL ->
+                $"\t{special |> string}\t0x{instr >>> 6:X}"
+            | Special.BREAK ->
+                $"\t{special |> string}\t0x{instr >>> 16:X}"
             | _ -> instr |> unkInstr
         | _ -> instr |> unkInstr
 

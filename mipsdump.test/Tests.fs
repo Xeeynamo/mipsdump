@@ -120,13 +120,44 @@ let useAlias = Flags.UseAlias
 
 [<Fact>]
 let ``Disassemble basic instructions`` () =
+    Assert.Equal("\tsll\t$v0, $a0, 6", disassembleInstr (SLL V0 A0 6u) noFlags)
+    Assert.Equal("\tsrl\t$v0, $a0, 12", disassembleInstr (SRL V0 A0 12u) noFlags)
+    Assert.Equal("\tsra\t$v0, $a0, 18", disassembleInstr (SRA V0 A0 18u) noFlags)
+    Assert.Equal("\tsllv\t$v0, $a0, $a1", disassembleInstr (SLLV V0 A0 A1) noFlags)
+    Assert.Equal("\tsrav\t$v0, $a0, $a1", disassembleInstr (SRAV V0 A0 A1) noFlags)
+    Assert.Equal("\tsrlv\t$v0, $a0, $a1", disassembleInstr (SRLV V0 A0 A1) noFlags)
+    Assert.Equal("\tsyscall\t0x123", disassembleInstr (SYSCALL 0x123u) noFlags)
+    Assert.Equal("\tbreak\t0x123", disassembleInstr (BREAK 0x123u) noFlags)
+    Assert.Equal("\tmfhi\t$v0", disassembleInstr (MFHI V0) noFlags)
+    Assert.Equal("\tmthi\t$v0", disassembleInstr (MTHI V0) noFlags)
+    Assert.Equal("\tmflo\t$v0", disassembleInstr (MFLO V0) noFlags)
+    Assert.Equal("\tmtlo\t$v0", disassembleInstr (MTLO V0) noFlags)
+    Assert.Equal("\tmult\t$v0, $a0", disassembleInstr (MULT V0 A0) noFlags)
+    Assert.Equal("\tmultu\t$v0, $a0", disassembleInstr (MULTU V0 A0) noFlags)
+    Assert.Equal("\tdiv\t$v0, $a0", disassembleInstr (DIV V0 A0) noFlags)
+    Assert.Equal("\tdivu\t$v0, $a0", disassembleInstr (DIVU V0 A0) noFlags)
     Assert.Equal("\tadd\t$v0, $a0, $a1", disassembleInstr (ADD V0 A0 A1) noFlags)
+    Assert.Equal("\taddu\t$v0, $a0, $a1", disassembleInstr (ADDU V0 A0 A1) noFlags)
+    Assert.Equal("\tsub\t$v0, $a0, $a1", disassembleInstr (SUB V0 A0 A1) noFlags)
+    Assert.Equal("\tsubu\t$v0, $a0, $a1", disassembleInstr (SUBU V0 A0 A1) noFlags)
+    Assert.Equal("\tand\t$v0, $a0, $a1", disassembleInstr (AND V0 A0 A1) noFlags)
     Assert.Equal("\tor\t$v0, $a0, $a1", disassembleInstr (OR V0 A0 A1) noFlags)
+    Assert.Equal("\txor\t$v0, $a0, $a1", disassembleInstr (XOR V0 A0 A1) noFlags)
+    Assert.Equal("\tnor\t$v0, $a0, $a1", disassembleInstr (NOR V0 A0 A1) noFlags)
+    Assert.Equal("\tslt\t$v0, $a0, $a1", disassembleInstr (SLT V0 A0 A1) noFlags)
+    Assert.Equal("\tsltu\t$v0, $a0, $a1", disassembleInstr (SLTU V0 A0 A1) noFlags)
+
 
 [<Fact>]
 let ``Disassemble instructions with aliases`` () =
     Assert.Equal("\tor\t$v0, $a0, $zero", disassembleInstr (MOVE V0 A0) noFlags)
     Assert.Equal("\tmove\t$v0, $a0", disassembleInstr (MOVE V0 A0) useAlias)
+
+    Assert.Equal("\tsub\t$v0, $zero, $a0", disassembleInstr (NEG V0 A0) noFlags)
+    Assert.Equal("\tneg\t$v0, $a0", disassembleInstr (NEG V0 A0) useAlias)
+
+    Assert.Equal("\tsubu\t$v0, $zero, $a0", disassembleInstr (NEGU V0 A0) noFlags)
+    Assert.Equal("\tnegu\t$v0, $a0", disassembleInstr (NEGU V0 A0) useAlias)
     
 [<Fact>]
 let ``Disassemble unknown instructions`` () =
