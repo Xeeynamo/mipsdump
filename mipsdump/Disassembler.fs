@@ -9,6 +9,7 @@ open Instructions
 
 [<System.Flags>]
 type Flags =
+    | None = 0
     | UseAlias = 1
 
 let disassembleInstr (instr: uint) (flags: Flags) =

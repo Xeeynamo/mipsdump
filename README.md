@@ -2,6 +2,8 @@
 
 An experimental MIPS decompiler written in F#.
 
+This is not yet in an usable state.
+
 ## Why?
 
 I did not like the output from `mips-linux-gnu-objdump` as it needed some corrections to be compiled again by `mips-linux-gnu-as` and it lacked labels support from binary files.
@@ -41,7 +43,7 @@ let sum = [|
 
 ### Decompile single instruction
 
-`Instructions.disassembleInstr` will decompile a single `uint32` into assembly code. It also accepts [flags](#customise-the-disassembly-with-flags)
+`Instructions.disassembleInstr` will decompile a single `uint32` into assembly code. It also accepts [flags](#customise-the-disassembly-with-flags). For example, `disassembleInstr 0x00851021u Flags.None` will produce `addu $v0, $a0, $a1`.
 
 ### Customise the disassembly with flags
 

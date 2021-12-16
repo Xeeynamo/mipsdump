@@ -115,7 +115,7 @@ let ``Assemble instructions correctly`` () =
     Assert.Equal(0x4a123456u, COP2 0x123456u)
     Assert.Equal(0x4e123456u, COP3 0x123456u)
 
-let noFlags = 0 |> enum<Flags>
+let noFlags = Flags.None
 let useAlias = Flags.UseAlias
 
 [<Fact>]
