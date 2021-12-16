@@ -11,7 +11,7 @@ open type Instructions.Reg
 open Disassembler
 
 [<Fact>]
-let ``Assemble instructions correctly`` () =
+let ``Assemble instructions`` () =
     // R-type instructions
     Assert.Equal(0x001afec0u, SLL RA K0 0x1bu)
     Assert.Equal(0x001afec2u, SRL RA K0 0x1bu)
@@ -115,76 +115,73 @@ let ``Assemble instructions correctly`` () =
     Assert.Equal(0x4a123456u, COP2 0x123456u)
     Assert.Equal(0x4e123456u, COP3 0x123456u)
 
-let noFlags = Flags.None
-let useAlias = Flags.UseAlias
+let assertDisasm (instr: uint) (expected: string) =
+    Assert.Equal(expected, disassembleInstr instr Flags.UseAlias)
 
 [<Fact>]
-let ``Disassemble basic instructions`` () =
-    Assert.Equal("sll\t$v0, $a0, 6", disassembleInstr (SLL V0 A0 6u) noFlags)
-    Assert.Equal("srl\t$v0, $a0, 12", disassembleInstr (SRL V0 A0 12u) noFlags)
-    Assert.Equal("sra\t$v0, $a0, 18", disassembleInstr (SRA V0 A0 18u) noFlags)
-    Assert.Equal("sllv\t$v0, $a0, $a1", disassembleInstr (SLLV V0 A0 A1) noFlags)
-    Assert.Equal("srav\t$v0, $a0, $a1", disassembleInstr (SRAV V0 A0 A1) noFlags)
-    Assert.Equal("srlv\t$v0, $a0, $a1", disassembleInstr (SRLV V0 A0 A1) noFlags)
-    Assert.Equal("syscall\t0x123", disassembleInstr (SYSCALL 0x123u) noFlags)
-    Assert.Equal("break\t0x123", disassembleInstr (BREAK 0x123u) noFlags)
-    Assert.Equal("mfhi\t$v0", disassembleInstr (MFHI V0) noFlags)
-    Assert.Equal("mthi\t$v0", disassembleInstr (MTHI V0) noFlags)
-    Assert.Equal("mflo\t$v0", disassembleInstr (MFLO V0) noFlags)
-    Assert.Equal("mtlo\t$v0", disassembleInstr (MTLO V0) noFlags)
-    Assert.Equal("mult\t$v0, $a0", disassembleInstr (MULT V0 A0) noFlags)
-    Assert.Equal("multu\t$v0, $a0", disassembleInstr (MULTU V0 A0) noFlags)
-    Assert.Equal("div\t$v0, $a0", disassembleInstr (DIV V0 A0) noFlags)
-    Assert.Equal("divu\t$v0, $a0", disassembleInstr (DIVU V0 A0) noFlags)
-    Assert.Equal("add\t$v0, $a0, $a1", disassembleInstr (ADD V0 A0 A1) noFlags)
-    Assert.Equal("addu\t$v0, $a0, $a1", disassembleInstr (ADDU V0 A0 A1) noFlags)
-    Assert.Equal("sub\t$v0, $a0, $a1", disassembleInstr (SUB V0 A0 A1) noFlags)
-    Assert.Equal("subu\t$v0, $a0, $a1", disassembleInstr (SUBU V0 A0 A1) noFlags)
-    Assert.Equal("and\t$v0, $a0, $a1", disassembleInstr (AND V0 A0 A1) noFlags)
-    Assert.Equal("or\t$v0, $a0, $a1", disassembleInstr (OR V0 A0 A1) noFlags)
-    Assert.Equal("xor\t$v0, $a0, $a1", disassembleInstr (XOR V0 A0 A1) noFlags)
-    Assert.Equal("nor\t$v0, $a0, $a1", disassembleInstr (NOR V0 A0 A1) noFlags)
-    Assert.Equal("slt\t$v0, $a0, $a1", disassembleInstr (SLT V0 A0 A1) noFlags)
-    Assert.Equal("sltu\t$v0, $a0, $a1", disassembleInstr (SLTU V0 A0 A1) noFlags)
+let ``Basic instructions`` () =
+    assertDisasm (SLL V0 A0 6u) "sll\t$v0, $a0, 6"
+    assertDisasm (SRL V0 A0 12u) "srl\t$v0, $a0, 12"
+    assertDisasm (SRA V0 A0 18u) "sra\t$v0, $a0, 18"
+    assertDisasm (SLLV V0 A0 A1) "sllv\t$v0, $a0, $a1"
+    assertDisasm (SRAV V0 A0 A1) "srav\t$v0, $a0, $a1"
+    assertDisasm (SRLV V0 A0 A1) "srlv\t$v0, $a0, $a1"
+    assertDisasm (SYSCALL 0x123u) "syscall\t0x123"
+    assertDisasm (BREAK 0x123u) "break\t0x123"
+    assertDisasm (MFHI V0) "mfhi\t$v0"
+    assertDisasm (MTHI V0) "mthi\t$v0"
+    assertDisasm (MFLO V0) "mflo\t$v0"
+    assertDisasm (MTLO V0) "mtlo\t$v0"
+    assertDisasm (MULT V0 A0) "mult\t$v0, $a0"
+    assertDisasm (MULTU V0 A0) "multu\t$v0, $a0"
+    assertDisasm (DIV V0 A0) "div\t$v0, $a0"
+    assertDisasm (DIVU V0 A0) "divu\t$v0, $a0"
+    assertDisasm (ADD V0 A0 A1) "add\t$v0, $a0, $a1"
+    assertDisasm (ADDU V0 A0 A1) "addu\t$v0, $a0, $a1"
+    assertDisasm (SUB V0 A0 A1) "sub\t$v0, $a0, $a1"
+    assertDisasm (SUBU V0 A0 A1) "subu\t$v0, $a0, $a1"
+    assertDisasm (AND V0 A0 A1) "and\t$v0, $a0, $a1"
+    assertDisasm (OR V0 A0 A1) "or\t$v0, $a0, $a1"
+    assertDisasm (XOR V0 A0 A1) "xor\t$v0, $a0, $a1"
+    assertDisasm (NOR V0 A0 A1) "nor\t$v0, $a0, $a1"
+    assertDisasm (SLT V0 A0 A1) "slt\t$v0, $a0, $a1"
+    assertDisasm (SLTU V0 A0 A1) "sltu\t$v0, $a0, $a1"
 
-    Assert.Equal("addi\t$v0, $a0, -3", disassembleInstr (ADDI V0 A0 (int16 -3)) noFlags)
-    Assert.Equal("addiu\t$v0, $a0, 50000", disassembleInstr (ADDIU V0 A0 (uint16 50000)) noFlags)
-    Assert.Equal("slti\t$v0, $a0, 3", disassembleInstr (SLTI V0 A0 (int16 3)) noFlags)
-    Assert.Equal("sltiu\t$v0, $a0, 3", disassembleInstr (SLTIU V0 A0 (int16 3)) noFlags)
-    Assert.Equal("andi\t$v0, $a0, 3", disassembleInstr (ANDI V0 A0 (uint16 3)) noFlags)
-    Assert.Equal("ori\t$v0, $a0, 3", disassembleInstr (ORI V0 A0 (uint16 3)) noFlags)
-    Assert.Equal("xori\t$v0, $a0, 3", disassembleInstr (XORI V0 A0 (uint16 3)) noFlags)
+    assertDisasm (ADDI V0 A0 (int16 -3)) "addi\t$v0, $a0, -3"
+    assertDisasm (ADDIU V0 A0 (uint16 50000)) "addiu\t$v0, $a0, 50000"
+    assertDisasm (SLTI V0 A0 (int16 3)) "slti\t$v0, $a0, 3"
+    assertDisasm (SLTIU V0 A0 (int16 3)) "sltiu\t$v0, $a0, 3"
+    assertDisasm (ANDI V0 A0 (uint16 3)) "andi\t$v0, $a0, 3"
+    assertDisasm (ORI V0 A0 (uint16 3)) "ori\t$v0, $a0, 3"
+    assertDisasm (XORI V0 A0 (uint16 3)) "xori\t$v0, $a0, 3"
+    
+[<Fact>]
+let ``Instructions with pointer`` () =
+    assertDisasm (LB V0 S0 (int16 100)) "lb\t$v0, 100($s0)"
+    assertDisasm (LH V0 S0 (int16 -100)) "lh\t$v0, -100($s0)"
+    assertDisasm (LWL V0 S0 (int16 100)) "lwl\t$v0, 100($s0)"
+    assertDisasm (LW V0 S0 (int16 100)) "lw\t$v0, 100($s0)"
+    assertDisasm (LBU V0 S0 (int16 100)) "lbu\t$v0, 100($s0)"
+    assertDisasm (LHU V0 S0 (int16 100)) "lhu\t$v0, 100($s0)"
+    assertDisasm (LWR V0 S0 (int16 100)) "lwr\t$v0, 100($s0)"
 
 [<Fact>]
-let ``Disassemble instruction that uses pointers`` () =
-    Assert.Equal("lb\t$v0, 100($s0)", disassembleInstr (LB V0 S0 (int16 100)) noFlags)
-    Assert.Equal("lh\t$v0, -100($s0)", disassembleInstr (LH V0 S0 (int16 -100)) noFlags)
-    Assert.Equal("lwl\t$v0, 100($s0)", disassembleInstr (LWL V0 S0 (int16 100)) noFlags)
-    Assert.Equal("lw\t$v0, 100($s0)", disassembleInstr (LW V0 S0 (int16 100)) noFlags)
-    Assert.Equal("lbu\t$v0, 100($s0)", disassembleInstr (LBU V0 S0 (int16 100)) noFlags)
-    Assert.Equal("lhu\t$v0, 100($s0)", disassembleInstr (LHU V0 S0 (int16 100)) noFlags)
-    Assert.Equal("lwr\t$v0, 100($s0)", disassembleInstr (LWR V0 S0 (int16 100)) noFlags)
+let ``Use aliases aliases`` () =
+    let assertNoAliasDisasm (instr: uint) (expected: string) =
+        Assert.Equal(expected, disassembleInstr instr Flags.None)
+    let assertAliasDisasm (instr: uint) (expectedNoAlias: string) (expectedAlias: string) =
+        assertNoAliasDisasm instr expectedNoAlias
+        assertDisasm instr expectedAlias
+
+    assertAliasDisasm NOP "sll\t$zero, $zero, 0" "nop"
+    assertAliasDisasm (MOVE V0 A0) "or\t$v0, $a0, $zero" "move\t$v0, $a0"
+    assertAliasDisasm (NEG V0 A0) "sub\t$v0, $zero, $a0" "neg\t$v0, $a0"
+    assertAliasDisasm (NEGU V0 A0) "subu\t$v0, $zero, $a0" "negu\t$v0, $a0"
+    assertAliasDisasm (LIU S0 (uint16 50000)) "ori\t$s0, $zero, 50000" "li\t$s0, 50000"
+
+    assertNoAliasDisasm (LI S0 (int16 50000)) "addiu\t$s0, $zero, 50000"
+    assertDisasm (LI S0 (int16 -5000)) "li\t$s0, -5000"
 
 [<Fact>]
-let ``Disassemble instructions with aliases`` () =
-    Assert.Equal("sll\t$zero, $zero, 0", disassembleInstr NOP noFlags)
-    Assert.Equal("nop", disassembleInstr NOP useAlias)
-
-    Assert.Equal("or\t$v0, $a0, $zero", disassembleInstr (MOVE V0 A0) noFlags)
-    Assert.Equal("move\t$v0, $a0", disassembleInstr (MOVE V0 A0) useAlias)
-
-    Assert.Equal("sub\t$v0, $zero, $a0", disassembleInstr (NEG V0 A0) noFlags)
-    Assert.Equal("neg\t$v0, $a0", disassembleInstr (NEG V0 A0) useAlias)
-
-    Assert.Equal("subu\t$v0, $zero, $a0", disassembleInstr (NEGU V0 A0) noFlags)
-    Assert.Equal("negu\t$v0, $a0", disassembleInstr (NEGU V0 A0) useAlias)
-
-    Assert.Equal("addiu\t$s0, $zero, 50000", disassembleInstr (LI S0 (int16 50000)) noFlags)
-    Assert.Equal("li\t$s0, -5000", disassembleInstr (LI S0 (int16 -5000)) useAlias)
-
-    Assert.Equal("ori\t$s0, $zero, 50000", disassembleInstr (LIU S0 (uint16 50000)) noFlags)
-    Assert.Equal("li\t$s0, 50000", disassembleInstr (LIU S0 (uint16 50000)) useAlias)
-
-[<Fact>]
-let ``Disassemble unknown instructions`` () =
-    Assert.Equal(".word 0xffffffff", disassembleInstr (0xffffffffu) noFlags)
+let ``Unknown instructions`` () =
+    assertDisasm 0xffffffffu ".word 0xffffffff"
