@@ -14,6 +14,8 @@ type Flags =
 
 let disassembleInstr (instr: uint) (flags: Flags) =
     let unkInstr instr = $".word 0x{instr:X08}"
+    let imms instr = int16 (instr &&& 0xffffu)
+    let immu instr = uint16 (instr &&& 0xffffu)
     let op = instr >>> 26 |> int |> enum<Op>
     let rs = (instr >>> 21) &&& 0x1Fu |> int |> enum<Reg>
     let rt = (instr >>> 16) &&& 0x1Fu |> int |> enum<Reg>
@@ -21,10 +23,10 @@ let disassembleInstr (instr: uint) (flags: Flags) =
     let special =
         let rd = (instr >>> 11) &&& 0x1Fu |> int |> enum<Reg>
         let funct = instr &&& 0x3Fu |> int |> enum<Special>
-        let shamt = (instr >>> 6) &&& 0x1Fu |> int
+        let shamt instr = (instr >>> 6) &&& 0x1Fu |> int
 
         match (funct, rd, rs, rt, flags.HasFlag(Flags.UseAlias)) with
-        | Special.SLL, Reg.ZERO, Reg.ZERO, Reg.ZERO, true when shamt = 0 -> "nop"
+        | Special.SLL, Reg.ZERO, Reg.ZERO, Reg.ZERO, true when shamt instr = 0 -> "nop"
         | Special.SUB, _, Reg.ZERO, _, true -> $"neg\t${rd |> string}, ${rt |> string}"
         | Special.SUBU, _, Reg.ZERO, _, true -> $"negu\t${rd |> string}, ${rt |> string}"
         | Special.OR, _, _, Reg.ZERO, true -> $"move\t${rd |> string}, ${rs |> string}"
@@ -38,7 +40,7 @@ let disassembleInstr (instr: uint) (flags: Flags) =
         | Special.DIVU, Reg.ZERO, _, _, _ -> $"{funct |> string}\t${rs |> string}, ${rt |> string}"
         | Special.SLL, _, Reg.ZERO, _, _
         | Special.SRL, _, Reg.ZERO, _, _
-        | Special.SRA, _, Reg.ZERO, _, _ -> $"{funct |> string}\t${rd |> string}, ${rt |> string}, {shamt}"
+        | Special.SRA, _, Reg.ZERO, _, _ -> $"{funct |> string}\t${rd |> string}, ${rt |> string}, {shamt instr}"
         | Special.ADD, _, _, _, _
         | Special.SUB, _, _, _, _
         | Special.ADDU, _, _, _, _
@@ -60,11 +62,9 @@ let disassembleInstr (instr: uint) (flags: Flags) =
         match op with
         | Op.SPECIAL -> special
         | Op.ADDI | Op.SLTI ->
-            let imms = int16 (instr &&& 0xffffu)
-            $"{op |> string}\t${rt |> string}, ${rs |> string}, {imms}"
+            $"{op |> string}\t${rt |> string}, ${rs |> string}, {imms instr}"
         | Op.ADDIU | Op.SLTIU | Op.ANDI | Op.ORI | Op.XORI ->
-            let immu = uint16 (instr &&& 0xffffu)
-            $"{op |> string}\t${rt |> string}, ${rs |> string}, {immu}"
+            $"{op |> string}\t${rt |> string}, ${rs |> string}, {immu instr}"
         | _ -> instr |> unkInstr
 
     $"\t{disasm}".ToLower()
