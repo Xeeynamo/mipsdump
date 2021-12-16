@@ -67,4 +67,4 @@ let disassembleInstr (instr: uint) (flags: Flags) =
             $"{string op}\t${string rt}, ${string rs}, {immu instr}"
         | _ -> unkInstr instr
 
-    $"\t{disasm}".ToLower()
+    disasm.ToLower()
