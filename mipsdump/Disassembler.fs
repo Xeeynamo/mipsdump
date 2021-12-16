@@ -27,20 +27,20 @@ let disassembleInstr (instr: uint) (flags: Flags) =
 
         match (funct, rd, rs, rt, flags.HasFlag(Flags.UseAlias)) with
         | Special.SLL, Reg.ZERO, Reg.ZERO, Reg.ZERO, true when shamt instr = 0 -> "nop"
-        | Special.SUB, _, Reg.ZERO, _, true -> $"neg\t${rd |> string}, ${rt |> string}"
-        | Special.SUBU, _, Reg.ZERO, _, true -> $"negu\t${rd |> string}, ${rt |> string}"
-        | Special.OR, _, _, Reg.ZERO, true -> $"move\t${rd |> string}, ${rs |> string}"
+        | Special.SUB, _, Reg.ZERO, _, true -> $"neg\t${string rd}, ${string rt}"
+        | Special.SUBU, _, Reg.ZERO, _, true -> $"negu\t${string rd}, ${string rt}"
+        | Special.OR, _, _, Reg.ZERO, true -> $"move\t${string rd}, ${string rs}"
         | Special.MFHI, _, Reg.ZERO, Reg.ZERO, _
         | Special.MTHI, _, Reg.ZERO, Reg.ZERO, _
         | Special.MFLO, _, Reg.ZERO, Reg.ZERO, _
-        | Special.MTLO, _, Reg.ZERO, Reg.ZERO, _ -> $"{funct |> string}\t${rd |> string}"
+        | Special.MTLO, _, Reg.ZERO, Reg.ZERO, _ -> $"{string funct}\t${string rd}"
         | Special.MULT, Reg.ZERO, _, _, _
         | Special.MULTU, Reg.ZERO, _, _, _
         | Special.DIV, Reg.ZERO, _, _, _
-        | Special.DIVU, Reg.ZERO, _, _, _ -> $"{funct |> string}\t${rs |> string}, ${rt |> string}"
+        | Special.DIVU, Reg.ZERO, _, _, _ -> $"{string funct}\t${string rs}, ${string rt}"
         | Special.SLL, _, Reg.ZERO, _, _
         | Special.SRL, _, Reg.ZERO, _, _
-        | Special.SRA, _, Reg.ZERO, _, _ -> $"{funct |> string}\t${rd |> string}, ${rt |> string}, {shamt instr}"
+        | Special.SRA, _, Reg.ZERO, _, _ -> $"{string funct}\t${string rd}, ${string rt}, {shamt instr}"
         | Special.ADD, _, _, _, _
         | Special.SUB, _, _, _, _
         | Special.ADDU, _, _, _, _
@@ -50,21 +50,21 @@ let disassembleInstr (instr: uint) (flags: Flags) =
         | Special.XOR, _, _, _, _
         | Special.NOR, _, _, _, _
         | Special.SLT, _, _, _, _
-        | Special.SLTU, _, _, _, _ -> $"{funct |> string}\t${rd |> string}, ${rs |> string}, ${rt |> string}"
+        | Special.SLTU, _, _, _, _ -> $"{string funct}\t${string rd}, ${string rs}, ${string rt}"
         | Special.SLLV, _, _, _, _
         | Special.SRAV, _, _, _, _
-        | Special.SRLV, _, _, _, _ -> $"{funct |> string}\t${rd |> string}, ${rt |> string}, ${rs |> string}"
+        | Special.SRLV, _, _, _, _ -> $"{string funct}\t${string rd}, ${string rt}, ${string rs}"
         | Special.SYSCALL, _, _, _, _ -> $"syscall\t0x{instr >>> 6:X}"
         | Special.BREAK, _, _, _, _ -> $"break\t0x{instr >>> 16:X}"
-        | _, _, _, _, _ -> instr |> unkInstr
+        | _, _, _, _, _ -> unkInstr instr
 
     let disasm =
         match op with
         | Op.SPECIAL -> special
         | Op.ADDI | Op.SLTI ->
-            $"{op |> string}\t${rt |> string}, ${rs |> string}, {imms instr}"
+            $"{string op}\t${string rt}, ${string rs}, {imms instr}"
         | Op.ADDIU | Op.SLTIU | Op.ANDI | Op.ORI | Op.XORI ->
-            $"{op |> string}\t${rt |> string}, ${rs |> string}, {immu instr}"
-        | _ -> instr |> unkInstr
+            $"{string op}\t${string rt}, ${string rs}, {immu instr}"
+        | _ -> unkInstr instr
 
     $"\t{disasm}".ToLower()
