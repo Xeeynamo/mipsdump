@@ -41,9 +41,19 @@ let sum = [|
 	|]
 ```
 
+Some instructions do not accept large numbers. For instance `addi` accepts a 16-bit signed number, so you need to pass a `int16` to let the compiler to be happy:
+
+```fsharp
+let n = int16 -123
+let op1 = ADDI A0 A1 n
+let op2 = ADDIU V0 A0 (uint16 123)
+```
+
 ### Decompile single instruction
 
-`Instructions.disassembleInstr` will decompile a single `uint32` into assembly code. It also accepts [flags](#customise-the-disassembly-with-flags). For example, `disassembleInstr 0x00851021u Flags.None` will produce `addu $v0, $a0, $a1`.
+`Instructions.disassembleInstr` will decompile a single `uint32` into assembly code. It also accepts [flags](#customise-the-disassembly-with-flags).
+
+For example, `disassembleInstr 0x00851021u Flags.None` will produce `addu $v0, $a0, $a1`.
 
 ### Customise the disassembly with flags
 

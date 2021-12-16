@@ -147,9 +147,19 @@ let ``Disassemble basic instructions`` () =
     Assert.Equal("\tslt\t$v0, $a0, $a1", disassembleInstr (SLT V0 A0 A1) noFlags)
     Assert.Equal("\tsltu\t$v0, $a0, $a1", disassembleInstr (SLTU V0 A0 A1) noFlags)
 
+    Assert.Equal("\taddi\t$v0, $a0, -3", disassembleInstr (ADDI V0 A0 (int16 -3)) noFlags)
+    Assert.Equal("\taddiu\t$v0, $a0, 50000", disassembleInstr (ADDIU V0 A0 (uint16 50000)) noFlags)
+    Assert.Equal("\tslti\t$v0, $a0, 3", disassembleInstr (SLTI V0 A0 (int16 3)) noFlags)
+    Assert.Equal("\tsltiu\t$v0, $a0, 3", disassembleInstr (SLTIU V0 A0 (int16 3)) noFlags)
+    Assert.Equal("\tandi\t$v0, $a0, 3", disassembleInstr (ANDI V0 A0 (uint16 3)) noFlags)
+    Assert.Equal("\tori\t$v0, $a0, 3", disassembleInstr (ORI V0 A0 (uint16 3)) noFlags)
+    Assert.Equal("\txori\t$v0, $a0, 3", disassembleInstr (XORI V0 A0 (uint16 3)) noFlags)
 
 [<Fact>]
 let ``Disassemble instructions with aliases`` () =
+    Assert.Equal("\tsll\t$zero, $zero, 0", disassembleInstr NOP noFlags)
+    Assert.Equal("\tnop", disassembleInstr NOP useAlias)
+
     Assert.Equal("\tor\t$v0, $a0, $zero", disassembleInstr (MOVE V0 A0) noFlags)
     Assert.Equal("\tmove\t$v0, $a0", disassembleInstr (MOVE V0 A0) useAlias)
 
