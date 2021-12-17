@@ -21,7 +21,7 @@ type Op =
     | BEQ = 0x04 | BNE = 0x05 | BLEZ = 0x06 | BGTZ = 0x07
     | ADDI = 0x08 | ADDIU = 0x09 | SLTI = 0x0A | SLTIU = 0x0B
     | ANDI = 0x0C | ORI = 0x0D | XORI = 0x0E | LUI = 0x0F
-    | MFC0 = 0x10 | MFC1 = 0x11 | MFC2 = 0x12 | MFC3 = 0x13
+    | C0 = 0x10 | C1 = 0x11 | C2 = 0x12 | C3 = 0x13
     | LB = 0x20 | LH = 0x21 | LWL = 0x22 | LW = 0x23
     | LBU = 0x24 | LHU = 0x25 | LWR = 0x26
     | SB = 0x28 | SH = 0x29 | SWL = 0x2a | SW = 0x2b
@@ -38,6 +38,8 @@ type Special =
     | ADD = 0x20 | ADDU = 0x21 | SUB = 0x22 | SUBU = 0x23
     | AND = 0x24 | OR = 0x25 | XOR = 0x26 | NOR = 0x27
     | SLT = 0x2A | SLTU = 0x2B
+type Cop =
+    | MFC = 0x00 | CFC = 0x02 | MTC = 0x04 | CTC = 0x06 | BC = 0x10
 
 let s16to32 (value:int16) = (value |> uint) &&& 0xFFFFu
 let u16to32 (value:uint16) = (value |> uint) &&& 0xFFFFu
@@ -114,10 +116,26 @@ let LI (dst:Reg) (imm:int16) = ADDIU dst Reg.ZERO (uint16 imm)
 let LIU (dst:Reg) (imm:uint16) = ORI dst Reg.ZERO (uint16 imm)
 
 // Co-processor instructions
-let MFC0 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Op.MFC0 <<< 26)
-let MFC1 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Op.MFC1 <<< 26)
-let MFC2 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Op.MFC2 <<< 26)
-let MFC3 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Op.MFC3 <<< 26)
+let MFC0 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.MFC <<< 21) ||| (uint Op.C0 <<< 26)
+let MFC1 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.MFC <<< 21) ||| (uint Op.C1 <<< 26)
+let MFC2 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.MFC <<< 21) ||| (uint Op.C2 <<< 26)
+let MFC3 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.MFC <<< 21) ||| (uint Op.C3 <<< 26)
+let MTC0 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.MTC <<< 21) ||| (uint Op.C0 <<< 26)
+let MTC1 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.MTC <<< 21) ||| (uint Op.C1 <<< 26)
+let MTC2 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.MTC <<< 21) ||| (uint Op.C2 <<< 26)
+let MTC3 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.MTC <<< 21) ||| (uint Op.C3 <<< 26)
+let CFC0 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.CFC <<< 21) ||| (uint Op.C0 <<< 26)
+let CFC1 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.CFC <<< 21) ||| (uint Op.C1 <<< 26)
+let CFC2 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.CFC <<< 21) ||| (uint Op.C2 <<< 26)
+let CFC3 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.CFC <<< 21) ||| (uint Op.C3 <<< 26)
+let CTC0 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.CTC <<< 21) ||| (uint Op.C0 <<< 26)
+let CTC1 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.CTC <<< 21) ||| (uint Op.C1 <<< 26)
+let CTC2 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.CTC <<< 21) ||| (uint Op.C2 <<< 26)
+let CTC3 (dst:Reg) (src:uint) = ((src &&& 0x1Fu) <<< 11) ||| (uint dst <<< 16) ||| (uint Cop.CTC <<< 21) ||| (uint Op.C3 <<< 26)
+let COP0 (offset:uint32) = (offset &&& 0x1FFFFFFu) ||| (1u <<< 25) ||| (uint Op.C0 <<< 26)
+let COP1 (offset:uint32) = (offset &&& 0x1FFFFFFu) ||| (1u <<< 25) ||| (uint Op.C1 <<< 26)
+let COP2 (offset:uint32) = (offset &&& 0x1FFFFFFu) ||| (1u <<< 25) ||| (uint Op.C2 <<< 26)
+let COP3 (offset:uint32) = (offset &&& 0x1FFFFFFu) ||| (1u <<< 25) ||| (uint Op.C3 <<< 26)
 let LWC0 (dst:uint) (src:Reg) (imm:int16) = s16to32 imm ||| (uint dst <<< 16) ||| (uint src <<< 21) ||| (uint Op.LWC0 <<< 26)
 let LWC1 (dst:uint) (src:Reg) (imm:int16) = s16to32 imm ||| (uint dst <<< 16) ||| (uint src <<< 21) ||| (uint Op.LWC1 <<< 26)
 let LWC2 (dst:uint) (src:Reg) (imm:int16) = s16to32 imm ||| (uint dst <<< 16) ||| (uint src <<< 21) ||| (uint Op.LWC2 <<< 26)
@@ -134,10 +152,6 @@ let BC2F (offset:int16) = s16to32 offset ||| (0x12u <<< 26) ||| (0x10u <<< 20) |
 let BC2T (offset:int16) = s16to32 offset ||| (0x12u <<< 26) ||| (0x10u <<< 20) ||| (1u <<< 16)
 let BC3F (offset:int16) = s16to32 offset ||| (0x13u <<< 26) ||| (0x10u <<< 20) ||| (0u <<< 16)
 let BC3T (offset:int16) = s16to32 offset ||| (0x13u <<< 26) ||| (0x10u <<< 20) ||| (1u <<< 16)
-let COP0 (offset:uint32) = (offset &&& 0x1FFFFFFu) ||| (1u <<< 25) ||| (0x10u <<< 26)
-let COP1 (offset:uint32) = (offset &&& 0x1FFFFFFu) ||| (1u <<< 25) ||| (0x11u <<< 26)
-let COP2 (offset:uint32) = (offset &&& 0x1FFFFFFu) ||| (1u <<< 25) ||| (0x12u <<< 26)
-let COP3 (offset:uint32) = (offset &&& 0x1FFFFFFu) ||| (1u <<< 25) ||| (0x13u <<< 26)
 
 // J-type instructions
 let J (addr:uint) = (addr &&& 0x3FFFFFFu) ||| (uint Op.J <<< 26)

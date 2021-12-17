@@ -94,6 +94,18 @@ let ``Assemble instructions`` () =
     Assert.Equal(0x441fd000u, MFC1 RA 26u)
     Assert.Equal(0x481fd000u, MFC2 RA 26u)
     Assert.Equal(0x4c1fd000u, MFC3 RA 26u)
+    Assert.Equal(0x4084a000u, MTC0 A0 20u)
+    Assert.Equal(0x4484a000u, MTC1 A0 20u)
+    Assert.Equal(0x4884a000u, MTC2 A0 20u)
+    Assert.Equal(0x4c84a000u, MTC3 A0 20u)
+    Assert.Equal(0x4044a000u, CFC0 A0 20u)
+    Assert.Equal(0x4444a000u, CFC1 A0 20u)
+    Assert.Equal(0x4844a000u, CFC2 A0 20u)
+    Assert.Equal(0x4c44a000u, CFC3 A0 20u)
+    Assert.Equal(0x40c4a000u, CTC0 A0 20u)
+    Assert.Equal(0x44c4a000u, CTC1 A0 20u)
+    Assert.Equal(0x48c4a000u, CTC2 A0 20u)
+    Assert.Equal(0x4cc4a000u, CTC3 A0 20u)
     Assert.Equal(0xc3fa3333u, LWC0 26u RA (int16 0x3333))
     Assert.Equal(0xc7fa3333u, LWC1 26u RA (int16 0x3333))
     Assert.Equal(0xcbfa3333u, LWC2 26u RA (int16 0x3333))
@@ -154,7 +166,8 @@ let ``Basic instructions`` () =
     assertDisasm (ANDI V0 A0 (uint16 3)) "andi\t$v0, $a0, 3"
     assertDisasm (ORI V0 A0 (uint16 3)) "ori\t$v0, $a0, 3"
     assertDisasm (XORI V0 A0 (uint16 3)) "xori\t$v0, $a0, 3"
-    
+
+
 [<Fact>]
 let ``Instructions with pointer`` () =
     assertDisasm (LB V0 S0 (int16 100)) "lb\t$v0, 100($s0)"
@@ -164,6 +177,37 @@ let ``Instructions with pointer`` () =
     assertDisasm (LBU V0 S0 (int16 100)) "lbu\t$v0, 100($s0)"
     assertDisasm (LHU V0 S0 (int16 100)) "lhu\t$v0, 100($s0)"
     assertDisasm (LWR V0 S0 (int16 100)) "lwr\t$v0, 100($s0)"
+
+[<Fact>]
+let ``Coprocessor instructions`` () =
+    assertDisasm (MFC0 V0 20u) "mfc0\t$v0, $20"
+    assertDisasm (MFC1 V0 20u) "mfc1\t$v0, $20"
+    assertDisasm (MFC2 V0 20u) "mfc2\t$v0, $20"
+    assertDisasm (MFC3 V0 20u) "mfc3\t$v0, $20"
+    assertDisasm (MTC0 V0 20u) "mtc0\t$v0, $20"
+    assertDisasm (MTC1 V0 20u) "mtc1\t$v0, $20"
+    assertDisasm (MTC2 V0 20u) "mtc2\t$v0, $20"
+    assertDisasm (MTC3 V0 20u) "mtc3\t$v0, $20"
+    assertDisasm (CFC0 V0 20u) "cfc0\t$v0, $20"
+    assertDisasm (CFC1 V0 20u) "cfc1\t$v0, $20"
+    assertDisasm (CFC2 V0 20u) "cfc2\t$v0, $20"
+    assertDisasm (CFC3 V0 20u) "cfc3\t$v0, $20"
+    assertDisasm (CTC0 V0 20u) "ctc0\t$v0, $20"
+    assertDisasm (CTC1 V0 20u) "ctc1\t$v0, $20"
+    assertDisasm (CTC2 V0 20u) "ctc2\t$v0, $20"
+    assertDisasm (CTC3 V0 20u) "ctc3\t$v0, $20"
+    assertDisasm (LWC0 20u A0 (int16 0x20)) "lwc0\t$20, 0x20($a0)"
+    assertDisasm (LWC1 20u A0 (int16 0x20)) "lwc1\t$20, 0x20($a0)"
+    assertDisasm (LWC2 20u A0 (int16 0x20)) "lwc2\t$20, 0x20($a0)"
+    assertDisasm (LWC3 20u A0 (int16 0x20)) "lwc3\t$20, 0x20($a0)"
+    assertDisasm (SWC0 20u A0 (int16 0x20)) "swc0\t$20, 0x20($a0)"
+    assertDisasm (SWC1 20u A0 (int16 0x20)) "swc1\t$20, 0x20($a0)"
+    assertDisasm (SWC2 20u A0 (int16 0x20)) "swc2\t$20, 0x20($a0)"
+    assertDisasm (SWC3 20u A0 (int16 0x20)) "swc3\t$20, 0x20($a0)"
+    assertDisasm (COP0 0u) "cop0\t0x0"
+    assertDisasm (COP1 0x80000u) "cop1\t0x80000"
+    assertDisasm (COP2 0x1FFFFFFu) "cop2\t0x1ffffff"
+    assertDisasm (COP3 0x2000000u) "cop3\t0x0"
 
 [<Fact>]
 let ``Use aliases aliases`` () =

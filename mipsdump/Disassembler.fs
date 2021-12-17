@@ -58,6 +58,14 @@ let disassembleInstr (instr: uint) (flags: Flags) =
         | Special.SYSCALL, _, _, _ -> $"syscall\t0x{instr >>> 6:X}"
         | Special.BREAK, _, _, _ -> $"break\t0x{instr >>> 16:X}"
         | _, _, _, _ -> unkInstr instr
+    let cop =
+        let cop = uint op &&& 3u
+        match rs |> int |> enum<Cop> with
+        | Cop.MFC -> $"MFC{cop}\t${string rt}, ${(instr >>> 11) &&& 0x1Fu}"
+        | Cop.MTC -> $"MTC{cop}\t${string rt}, ${(instr >>> 11) &&& 0x1Fu}"
+        | Cop.CFC -> $"CFC{cop}\t${string rt}, ${(instr >>> 11) &&& 0x1Fu}"
+        | Cop.CTC -> $"CTC{cop}\t${string rt}, ${(instr >>> 11) &&& 0x1Fu}"
+        | _ -> $"COP{cop}\t0x{instr &&& 0x1FFFFFFu:X}"
 
     let disasm =
         match op with
@@ -70,6 +78,10 @@ let disassembleInstr (instr: uint) (flags: Flags) =
             $"{string op}\t${string rt}, ${string rs}, {immu instr}"
         | Op.LB | Op.LH | Op.LWL | Op.LW | Op.LBU | Op.LHU | Op.LWR ->
             $"{string op}\t${string rt}, {imms instr}(${string rs})"
+        | Op.LWC0 | Op.LWC1 | Op.LWC2| Op.LWC3
+        | Op.SWC0 | Op.SWC1 | Op.SWC2| Op.SWC3 ->
+            $"{string op}\t${int rt}, 0x{imms instr:X}(${string rs})"
+        | Op.C0 | Op.C1 | Op.C2 | Op.C3 -> cop
         | _ -> unkInstr instr
 
     disasm.ToLower()
