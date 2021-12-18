@@ -166,17 +166,23 @@ let ``Basic instructions`` () =
     assertDisasm (ANDI V0 A0 (uint16 3)) "andi\t$v0, $a0, 3"
     assertDisasm (ORI V0 A0 (uint16 3)) "ori\t$v0, $a0, 3"
     assertDisasm (XORI V0 A0 (uint16 3)) "xori\t$v0, $a0, 3"
+    assertDisasm(LUI S0 (uint16 100)) "lui\t$s0, 0x64"
 
 
 [<Fact>]
 let ``Instructions with pointer`` () =
-    assertDisasm (LB V0 S0 (int16 100)) "lb\t$v0, 100($s0)"
-    assertDisasm (LH V0 S0 (int16 -100)) "lh\t$v0, -100($s0)"
-    assertDisasm (LWL V0 S0 (int16 100)) "lwl\t$v0, 100($s0)"
-    assertDisasm (LW V0 S0 (int16 100)) "lw\t$v0, 100($s0)"
-    assertDisasm (LBU V0 S0 (int16 100)) "lbu\t$v0, 100($s0)"
-    assertDisasm (LHU V0 S0 (int16 100)) "lhu\t$v0, 100($s0)"
-    assertDisasm (LWR V0 S0 (int16 100)) "lwr\t$v0, 100($s0)"
+    assertDisasm (LB V0 S0 (int16 100)) "lb\t$v0, 0x64($s0)"
+    assertDisasm (LH V0 S0 (int16 -100)) "lh\t$v0, -0x64($s0)"
+    assertDisasm (LWL V0 S0 (int16 100)) "lwl\t$v0, 0x64($s0)"
+    assertDisasm (LW V0 S0 (int16 100)) "lw\t$v0, 0x64($s0)"
+    assertDisasm (LBU V0 S0 (int16 100)) "lbu\t$v0, 0x64($s0)"
+    assertDisasm (LHU V0 S0 (int16 100)) "lhu\t$v0, 0x64($s0)"
+    assertDisasm (LWR V0 S0 (int16 100)) "lwr\t$v0, 0x64($s0)"
+    assertDisasm (SB V0 S0 (int16 100)) "sb\t$v0, 0x64($s0)"
+    assertDisasm (SH V0 S0 (int16 -100)) "sh\t$v0, -0x64($s0)"
+    assertDisasm (SWL V0 S0 (int16 100)) "swl\t$v0, 0x64($s0)"
+    assertDisasm (SW V0 S0 (int16 100)) "sw\t$v0, 0x64($s0)"
+    assertDisasm (SWR V0 S0 (int16 0)) "swr\t$v0, ($s0)"
 
 [<Fact>]
 let ``Coprocessor instructions`` () =
@@ -203,7 +209,7 @@ let ``Coprocessor instructions`` () =
     assertDisasm (SWC0 20u A0 (int16 0x20)) "swc0\t$20, 0x20($a0)"
     assertDisasm (SWC1 20u A0 (int16 0x20)) "swc1\t$20, 0x20($a0)"
     assertDisasm (SWC2 20u A0 (int16 0x20)) "swc2\t$20, 0x20($a0)"
-    assertDisasm (SWC3 20u A0 (int16 0x20)) "swc3\t$20, 0x20($a0)"
+    assertDisasm (SWC3 20u A0 (int16 -0x20)) "swc3\t$20, -0x20($a0)"
     assertDisasm (COP0 0u) "cop0\t0x0"
     assertDisasm (COP1 0x80000u) "cop1\t0x80000"
     assertDisasm (COP2 0x1FFFFFFu) "cop2\t0x1ffffff"

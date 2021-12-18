@@ -6,6 +6,7 @@
 module Disassembler
 
 open Instructions
+open System.IO
 
 [<System.Flags>]
 type Flags =
@@ -14,6 +15,10 @@ type Flags =
 
 let disassembleInstr (instr: uint) (flags: Flags) =
     let unkInstr instr = $".word 0x{instr:X08}"
+    let hexs (value:int16) =
+        match int value with
+        | 0 -> ""
+        | _ -> if value > int16 0 then $"0x{value:X}" else $"-0x{-value:X}"
     let imms instr = int16 (instr &&& 0xffffu)
     let immu instr = uint16 (instr &&& 0xffffu)
     let op = instr >>> 26 |> int |> enum<Op>
@@ -70,18 +75,32 @@ let disassembleInstr (instr: uint) (flags: Flags) =
     let disasm =
         match op with
         | Op.SPECIAL -> special
+        | Op.LUI -> $"lui\t${string rt}, 0x{immu instr:X}"
         | Op.ADDIU when rs = Reg.ZERO && useAlias = true -> $"li\t${string rt}, {imms instr}"
         | Op.ORI when rs = Reg.ZERO && useAlias = true -> $"li\t${string rt}, {immu instr}"
         | Op.ADDI | Op.SLTI ->
             $"{string op}\t${string rt}, ${string rs}, {imms instr}"
         | Op.ADDIU | Op.SLTIU | Op.ANDI | Op.ORI | Op.XORI ->
             $"{string op}\t${string rt}, ${string rs}, {immu instr}"
-        | Op.LB | Op.LH | Op.LWL | Op.LW | Op.LBU | Op.LHU | Op.LWR ->
-            $"{string op}\t${string rt}, {imms instr}(${string rs})"
+        | Op.LB | Op.LH | Op.LWL | Op.LW | Op.LBU | Op.LHU | Op.LWR
+        | Op.SB | Op.SH | Op.SWL | Op.SW | Op.SWR ->
+            $"{string op}\t${string rt}, {hexs (imms instr)}(${string rs})"
         | Op.LWC0 | Op.LWC1 | Op.LWC2| Op.LWC3
         | Op.SWC0 | Op.SWC1 | Op.SWC2| Op.SWC3 ->
-            $"{string op}\t${int rt}, 0x{imms instr:X}(${string rs})"
+            $"{string op}\t${int rt}, {hexs (imms instr)}(${string rs})"
         | Op.C0 | Op.C1 | Op.C2 | Op.C3 -> cop
         | _ -> unkInstr instr
 
     disasm.ToLower()
+
+let disassembleSeq (instrs: seq<uint>) (flags: Flags) =
+    let disasm x = disassembleInstr x flags
+    instrs |> Seq.map disasm
+
+let disassembleStream (reader: BinaryReader) (instrCount: int) (flags: Flags) =
+    disassembleSeq (Seq.init instrCount (fun _ -> reader.ReadUInt32())) flags
+
+let disassembleStreamRange (reader: BinaryReader) (offsetStart: uint) (offsetEnd: uint) (flags: Flags) =
+    let s = reader.BaseStream.Seek(int64 offsetStart, SeekOrigin.Begin)
+    let e = (min (int64 offsetEnd) reader.BaseStream.Length)
+    disassembleStream reader (int (e - s) / 4) flags
