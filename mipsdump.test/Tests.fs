@@ -127,8 +127,9 @@ let ``Assemble instructions`` () =
     Assert.Equal(0x4a123456u, COP2 0x123456u)
     Assert.Equal(0x4e123456u, COP3 0x123456u)
 
+let labels = [|(0x80010df4u, "TestFunction")|] |> Map.ofArray
 let assertDisasm (instr: uint) (expected: string) =
-    Assert.Equal(expected, disassembleInstr instr Flags.UseAlias)
+    Assert.Equal(expected, disassembleInstr instr labels Flags.UseAlias)
 
 [<Fact>]
 let ``Basic instructions`` () =
@@ -219,14 +220,16 @@ let ``Coprocessor instructions`` () =
 
 [<Fact>]
 let ``Jump instructions`` () =
-    assertDisasm (J 1u) "j\t0x4"
-    assertDisasm (J 0x3FFFFFFu) "j\t0xffffffc"
-    assertDisasm (JAL 0x140u) "jal\t0x500"
+    assertDisasm (J 1u) "j\t0x80000004"
+    assertDisasm (J 0x3FFFFFFu) "j\t0x8ffffffc"
+    assertDisasm (JAL 0x140u) "jal\t0x80000500"
+
+    assertDisasm (JAL 0x437Du) "jal\tTestFunction"
 
 [<Fact>]
 let ``Use aliases`` () =
     let assertNoAliasDisasm (instr: uint) (expected: string) =
-        Assert.Equal(expected, disassembleInstr instr Flags.None)
+        Assert.Equal(expected, disassembleInstr instr Map.empty Flags.None)
     let assertAliasDisasm (instr: uint) (expectedNoAlias: string) (expectedAlias: string) =
         assertNoAliasDisasm instr expectedNoAlias
         assertDisasm instr expectedAlias
