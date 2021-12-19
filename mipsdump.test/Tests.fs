@@ -158,6 +158,8 @@ let ``Basic instructions`` () =
     assertDisasm (NOR V0 A0 A1) "nor\t$v0, $a0, $a1"
     assertDisasm (SLT V0 A0 A1) "slt\t$v0, $a0, $a1"
     assertDisasm (SLTU V0 A0 A1) "sltu\t$v0, $a0, $a1"
+    assertDisasm (JR RA) "jr\t$ra"
+    assertDisasm (JALR RA) "jalr\t$ra"
 
     assertDisasm (ADDI V0 A0 (int16 -3)) "addi\t$v0, $a0, -3"
     assertDisasm (ADDIU V0 A0 (uint16 50000)) "addiu\t$v0, $a0, 50000"
@@ -216,7 +218,13 @@ let ``Coprocessor instructions`` () =
     assertDisasm (COP3 0x2000000u) "cop3\t0x0"
 
 [<Fact>]
-let ``Use aliases aliases`` () =
+let ``Jump instructions`` () =
+    assertDisasm (J 1u) "j\t0x4"
+    assertDisasm (J 0x3FFFFFFu) "j\t0xffffffc"
+    assertDisasm (JAL 0x140u) "jal\t0x500"
+
+[<Fact>]
+let ``Use aliases`` () =
     let assertNoAliasDisasm (instr: uint) (expected: string) =
         Assert.Equal(expected, disassembleInstr instr Flags.None)
     let assertAliasDisasm (instr: uint) (expectedNoAlias: string) (expectedAlias: string) =

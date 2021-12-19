@@ -67,6 +67,8 @@ let disassembleInstr (instr: uint) (flags: Flags) =
         | Special.SLLV, _, _, _
         | Special.SRAV, _, _, _
         | Special.SRLV, _, _, _ -> $"{string funct}\t${string rd}, ${string rt}, ${string rs}"
+        | Special.JR, Reg.ZERO, _, Reg.ZERO
+        | Special.JALR, Reg.ZERO, _, Reg.ZERO -> $"{string funct}\t${string rs}"
         | Special.SYSCALL, _, _, _ -> $"syscall\t0x{instr >>> 6:X}"
         | Special.BREAK, _, _, _ -> $"break\t0x{instr >>> 16:X}"
         | _, _, _, _ -> unkInstr instr
@@ -91,6 +93,7 @@ let disassembleInstr (instr: uint) (flags: Flags) =
         | Op.LB | Op.LH | Op.LWL | Op.LW | Op.LBU | Op.LHU | Op.LWR
         | Op.SB | Op.SH | Op.SWL | Op.SW | Op.SWR ->
             $"{string op}\t${string rt}, {hexs (imms instr)}(${string rs})"
+        | Op.J | Op.JAL -> $"{string op}\t0x{(instr &&& 0x3FFFFFFu) <<< 2:X}"
         | Op.LWC0 | Op.LWC1 | Op.LWC2| Op.LWC3
         | Op.SWC0 | Op.SWC1 | Op.SWC2| Op.SWC3 ->
             $"{string op}\t${int rt}, {hexs (imms instr)}(${string rs})"
