@@ -163,9 +163,9 @@ let ``Basic instructions`` () =
     assertDisasm (ADDIU V0 A0 (uint16 50000)) "addiu\t$v0, $a0, 50000"
     assertDisasm (SLTI V0 A0 (int16 3)) "slti\t$v0, $a0, 3"
     assertDisasm (SLTIU V0 A0 (int16 3)) "sltiu\t$v0, $a0, 3"
-    assertDisasm (ANDI V0 A0 (uint16 3)) "andi\t$v0, $a0, 3"
-    assertDisasm (ORI V0 A0 (uint16 3)) "ori\t$v0, $a0, 3"
-    assertDisasm (XORI V0 A0 (uint16 3)) "xori\t$v0, $a0, 3"
+    assertDisasm (ANDI V0 A0 (uint16 3)) "andi\t$v0, $a0, 0x3"
+    assertDisasm (ORI V0 A0 (uint16 3)) "ori\t$v0, $a0, 0x3"
+    assertDisasm (XORI V0 A0 (uint16 3)) "xori\t$v0, $a0, 0x3"
     assertDisasm(LUI S0 (uint16 100)) "lui\t$s0, 0x64"
 
 
@@ -227,7 +227,7 @@ let ``Use aliases aliases`` () =
     assertAliasDisasm (MOVE V0 A0) "or\t$v0, $a0, $zero" "move\t$v0, $a0"
     assertAliasDisasm (NEG V0 A0) "sub\t$v0, $zero, $a0" "neg\t$v0, $a0"
     assertAliasDisasm (NEGU V0 A0) "subu\t$v0, $zero, $a0" "negu\t$v0, $a0"
-    assertAliasDisasm (LIU S0 (uint16 50000)) "ori\t$s0, $zero, 50000" "li\t$s0, 50000"
+    assertAliasDisasm (LIU S0 (uint16 50000)) "ori\t$s0, $zero, 0xc350" "li\t$s0, 50000"
 
     assertNoAliasDisasm (LI S0 (int16 50000)) "addiu\t$s0, $zero, 50000"
     assertDisasm (LI S0 (int16 -5000)) "li\t$s0, -5000"
@@ -235,3 +235,24 @@ let ``Use aliases aliases`` () =
 [<Fact>]
 let ``Unknown instructions`` () =
     assertDisasm 0xffffffffu ".word 0xffffffff"
+
+[<Theory>]
+[<InlineData(1, "1")>]
+[<InlineData(2, "2")>]
+[<InlineData(3, "3")>]
+[<InlineData(4, "4")>]
+[<InlineData(8, "8")>]
+[<InlineData(10, "10")>]
+[<InlineData(0x10, "0x10")>]
+[<InlineData(20, "20")>]
+[<InlineData(0x20, "0x20")>]
+[<InlineData(100, "100")>]
+[<InlineData(0x80, "0x80")>]
+[<InlineData(0x100, "0x100")>]
+[<InlineData(500, "500")>]
+[<InlineData(5000, "5000")>]
+[<InlineData(55, "55")>]
+[<InlineData(33, "33")>]
+let ``Convert digit as a string`` (value: int) (expected: string) =
+    Assert.Equal(expected, intsToString value)
+    Assert.Equal($"-{expected}", intsToString -value)

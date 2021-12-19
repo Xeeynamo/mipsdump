@@ -13,14 +13,21 @@ type Flags =
     | None = 0
     | UseAlias = 1
 
+let intsToString (n: int) =
+    let mightBeDecimal = abs n < 16 || (n % 5) = 0 || (n % 3) = 0
+    if mightBeDecimal then n.ToString() else
+    if n >= 0 then $"0x{n:X}" else $"-0x{-n:X}"
+let intuToString (n: uint) =
+    let mightBeDecimal = n < 16u || (n % 5u) = 0u || (n % 3u) = 0u
+    if mightBeDecimal then n.ToString() else $"0x{n:X}"
+
 let disassembleInstr (instr: uint) (flags: Flags) =
     let unkInstr instr = $".word 0x{instr:X08}"
-    let hexs (value:int16) =
-        match int value with
-        | 0 -> ""
-        | _ -> if value > int16 0 then $"0x{value:X}" else $"-0x{-value:X}"
-    let imms instr = int16 (instr &&& 0xffffu)
-    let immu instr = uint16 (instr &&& 0xffffu)
+    let hexs (value:int) =
+        if value = 0 then "" else
+        if value > 0 then $"0x{value:X}" else $"-0x{-value:X}"
+    let imms instr = int (int16 (instr &&& 0xffffu))
+    let immu instr = uint (uint16 (instr &&& 0xffffu))
     let op = instr >>> 26 |> int |> enum<Op>
     let rs = (instr >>> 21) &&& 0x1Fu |> int |> enum<Reg>
     let rt = (instr >>> 16) &&& 0x1Fu |> int |> enum<Reg>
@@ -76,12 +83,11 @@ let disassembleInstr (instr: uint) (flags: Flags) =
         match op with
         | Op.SPECIAL -> special
         | Op.LUI -> $"lui\t${string rt}, 0x{immu instr:X}"
-        | Op.ADDIU when rs = Reg.ZERO && useAlias = true -> $"li\t${string rt}, {imms instr}"
-        | Op.ORI when rs = Reg.ZERO && useAlias = true -> $"li\t${string rt}, {immu instr}"
-        | Op.ADDI | Op.SLTI ->
-            $"{string op}\t${string rt}, ${string rs}, {imms instr}"
-        | Op.ADDIU | Op.SLTIU | Op.ANDI | Op.ORI | Op.XORI ->
-            $"{string op}\t${string rt}, ${string rs}, {immu instr}"
+        | Op.ADDIU when rs = Reg.ZERO && useAlias = true -> $"li\t${string rt}, {intsToString (imms instr)}"
+        | Op.ORI when rs = Reg.ZERO && useAlias = true -> $"li\t${string rt}, {intuToString (immu instr)}"
+        | Op.ADDI | Op.SLTI -> $"{string op}\t${string rt}, ${string rs}, {intsToString (imms instr)}"
+        | Op.ADDIU | Op.SLTIU -> $"{string op}\t${string rt}, ${string rs}, {intuToString (immu instr)}"
+        | Op.ANDI | Op.ORI | Op.XORI -> $"{string op}\t${string rt}, ${string rs}, 0x{immu instr:X}"
         | Op.LB | Op.LH | Op.LWL | Op.LW | Op.LBU | Op.LHU | Op.LWR
         | Op.SB | Op.SH | Op.SWL | Op.SW | Op.SWR ->
             $"{string op}\t${string rt}, {hexs (imms instr)}(${string rs})"
