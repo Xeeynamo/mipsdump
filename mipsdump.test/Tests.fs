@@ -129,7 +129,7 @@ let ``Assemble instructions`` () =
 
 let labels = [|(0x80010df4u, "TestFunction")|] |> Map.ofArray
 let assertDisasm (instr: uint) (expected: string) =
-    Assert.Equal(expected, disassembleInstr instr labels Flags.UseAlias)
+    Assert.Equal(expected, disassembleInstr instr 0u labels Flags.UseAlias)
 
 [<Fact>]
 let ``Basic instructions`` () =
@@ -227,9 +227,28 @@ let ``Jump instructions`` () =
     assertDisasm (JAL 0x437Du) "jal\tTestFunction"
 
 [<Fact>]
+let ``Branch instructions`` () =
+    assertDisasm (BEQ A0 S0 (int16 -1)) "beq\t$a0, $s0, 0x0"
+    assertDisasm (BNE A0 S0 (int16 -1)) "bne\t$a0, $s0, 0x0"
+
+    assertDisasm (BLEZ A0 (int16 -1)) "blez\t$a0, 0x0"
+    assertDisasm (BGTZ A0 (int16 -1)) "bgtz\t$a0, 0x0"
+
+    assertDisasm (BLTZ A0 (int16 -1)) "bltz\t$a0, 0x0"
+    assertDisasm (BGEZ A0 (int16 -1)) "bgez\t$a0, 0x0"
+    assertDisasm (BLTZAL A0 (int16 -1)) "bltzal\t$a0, 0x0"
+    assertDisasm (BGEZAL A0 (int16 -1)) "bgezal\t$a0, 0x0"
+
+    assertDisasm (BEQ A0 S0 (int16 -3)) "beq\t$a0, $s0, -0x4"
+    assertDisasm (BEQ A0 S0 (int16 -5)) "beq\t$a0, $s0, -0x8"
+    assertDisasm (BEQ A0 S0 (int16 -7)) "beq\t$a0, $s0, -0xc"
+    assertDisasm (BEQ A0 S0 (int16 1)) "beq\t$a0, $s0, 0x4"
+    assertDisasm (BEQ A0 S0 (int16 3)) "beq\t$a0, $s0, 0x8"
+
+[<Fact>]
 let ``Use aliases`` () =
     let assertNoAliasDisasm (instr: uint) (expected: string) =
-        Assert.Equal(expected, disassembleInstr instr Map.empty Flags.None)
+        Assert.Equal(expected, disassembleInstr instr 0u Map.empty Flags.None)
     let assertAliasDisasm (instr: uint) (expectedNoAlias: string) (expectedAlias: string) =
         assertNoAliasDisasm instr expectedNoAlias
         assertDisasm instr expectedAlias
@@ -242,6 +261,17 @@ let ``Use aliases`` () =
 
     assertNoAliasDisasm (LI S0 (int16 50000)) "addiu\t$s0, $zero, 50000"
     assertDisasm (LI S0 (int16 -5000)) "li\t$s0, -5000"
+
+[<Fact>]
+let ``Analyze branches and disassemble`` () =
+    let data = [|
+        NOP
+        BLEZ A0 (int16 -1)
+    |]
+    let disasm =
+        (disassembleData data 0x80010000u Map.empty Flags.UseAlias)
+        |> String.concat "\n"
+    Assert.Equal("\tnop\n\nloc_80010004:\n\tblez\t$a0, loc_80010004", disasm)
 
 [<Fact>]
 let ``Unknown instructions`` () =
