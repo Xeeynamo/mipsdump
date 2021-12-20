@@ -97,7 +97,10 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
         | Cop.MTC -> $"mtc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
         | Cop.CFC -> $"cfc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
         | Cop.CTC -> $"ctc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
-        | _ -> $"cop{cop}\t0x{instr &&& 0x1FFFFFFu:x}"
+        | _ ->
+            if (instr &&& (1u <<< 25)) <> 0u
+            then $"cop{cop}\t0x{instr &&& 0x1FFFFFFu:x}"
+            else unkInstr instr
 
     match op with
     | Op.SPECIAL -> special

@@ -217,6 +217,7 @@ let ``Coprocessor instructions`` () =
     assertDisasm (COP1 0x80000u) "cop1\t0x80000"
     assertDisasm (COP2 0x1FFFFFFu) "cop2\t0x1ffffff"
     assertDisasm (COP3 0x2000000u) "cop3\t0x0"
+    assertDisasm 0x45584520u ".word 0x45584520"
 
 [<Fact>]
 let ``Jump instructions`` () =
