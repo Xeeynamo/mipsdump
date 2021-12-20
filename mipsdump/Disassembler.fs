@@ -130,12 +130,13 @@ let analyzeBranches (instrs: uint[]) (baseAddr: uint) (labels: Map<uint32, strin
         if labels.ContainsKey(absAddr) = false then
             labels.Add(uint absAddr, $"loc_{absAddr:x}")
         else labels
-    let addJumpLabel (instr: uint) (labels: Map<uint32, string>) =
+    let addJumpLabel (instr: uint) (max: uint) (labels: Map<uint32, string>) =
         let absAddr = uint ((instr &&& 0x3FFFFFFu) <<< 2) ||| 0x80000000u
-        if labels.ContainsKey(absAddr) = false then
+        if absAddr < max && labels.ContainsKey(absAddr) = false then
             labels.Add(uint absAddr, $"sub_{absAddr:x}")
         else labels
-        
+
+    let maxAddr = baseAddr + uint instrs.Length * 4u
     let mutable curAddr = baseAddr
     let mutable moreLabels = labels
     for instr in instrs do
@@ -148,7 +149,7 @@ let analyzeBranches (instrs: uint[]) (baseAddr: uint) (labels: Map<uint32, strin
                 match regimm with
                 | Regimm.BLTZ | Regimm.BGEZ | Regimm.BLTZAL | Regimm.BGEZAL -> addLabel instr curAddr moreLabels
                 | _ -> moreLabels
-            | Op.J | Op.JAL -> addJumpLabel instr moreLabels
+            | Op.J | Op.JAL -> addJumpLabel instr maxAddr moreLabels
             | _ -> moreLabels
         curAddr <- curAddr + 4u
     moreLabels
