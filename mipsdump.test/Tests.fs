@@ -22,7 +22,7 @@ let ``Assemble instructions`` () =
     Assert.Equal(0x03e00008u, JR RA)
     Assert.Equal(0x03e00009u, JALR RA)
     Assert.Equal(0x03fb72ccu, SYSCALL 0xfedcbu)
-    Assert.Equal(0x03cc000du, BREAK 0x3ccu)
+    Assert.Equal(0x03cc8d0du, BREAK 0x3ccu 0x234u)
     Assert.Equal(0x0000f810u, MFHI RA)
     Assert.Equal(0x0000f811u, MTHI RA)
     Assert.Equal(0x0000f812u, MFLO RA)
@@ -140,7 +140,8 @@ let ``Basic instructions`` () =
     assertDisasm (SRAV V0 A0 A1) "srav\t$v0, $a0, $a1"
     assertDisasm (SRLV V0 A0 A1) "srlv\t$v0, $a0, $a1"
     assertDisasm (SYSCALL 0x123u) "syscall\t0x123"
-    assertDisasm (BREAK 0x123u) "break\t0x123"
+    assertDisasm (BREAK 0x123u 0x222u) "break\t0x123, 0x222"
+    assertDisasm (BREAK 0x123u 0x222u) "break\t0x123, 0x222"
     assertDisasm (MFHI V0) "mfhi\t$v0"
     assertDisasm (MTHI V0) "mthi\t$v0"
     assertDisasm (MFLO V0) "mflo\t$v0"
@@ -291,6 +292,7 @@ let ``Unknown instructions`` () =
     assertDisasm 0x45584520u ".word 0x45584520"
     assertDisasm 0x000a2964u ".word 0x000a2964"
     assertDisasm 0x3d657571u ".word 0x3d657571"
+    assertDisasm 0x44547465u ".word 0x44547465"
 
 [<Theory>]
 [<InlineData(1, "1")>]

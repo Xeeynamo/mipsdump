@@ -1,6 +1,6 @@
 # mipsdump
 
-A functional MIPS disassembler written in F#.
+A functional MIPS disassembler written in F# that produces 1:1 assembly code that can be compiled with GNU's `as`.
 
 ## Why?
 

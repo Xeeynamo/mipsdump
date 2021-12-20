@@ -82,7 +82,7 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
         | Special.JR, Reg.ZERO, _, Reg.ZERO, 0
         | Special.JALR, Reg.ZERO, _, Reg.ZERO, 0 -> $"{strlow funct}\t${strlow rs}"
         | Special.SYSCALL, _, _, _, _ -> $"syscall\t0x{instr >>> 6:X}"
-        | Special.BREAK, _, _, _, _ -> $"break\t0x{instr >>> 16:X}"
+        | Special.BREAK, _, _, _, _ -> $"break\t0x{(instr >>> 16) &&& 0x3ffu:x}, 0x{(instr >>> 6) &&& 0x3ffu:x}"
         | _, _, _, _, _ -> unkInstr instr
     let regimm =
         let regimm = rt |> int |> enum<Regimm>
@@ -92,11 +92,12 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
         | _ -> unkInstr instr
     let cop =
         let cop = uint op &&& 3u
-        match rs |> int |> enum<Cop> with
-        | Cop.MFC -> $"mfc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
-        | Cop.MTC -> $"mtc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
-        | Cop.CFC -> $"cfc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
-        | Cop.CTC -> $"ctc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
+        let zzz = instr &&& 0x7ffu
+        match (rs |> int |> enum<Cop>, zzz) with
+        | Cop.MFC, 0u -> $"mfc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
+        | Cop.MTC, 0u -> $"mtc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
+        | Cop.CFC, 0u -> $"cfc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
+        | Cop.CTC, 0u -> $"ctc{cop}\t${strlow rt}, ${(instr >>> 11) &&& 0x1Fu}"
         | _ ->
             if (instr &&& (1u <<< 25)) <> 0u
             then $"cop{cop}\t0x{instr &&& 0x1FFFFFFu:x}"
