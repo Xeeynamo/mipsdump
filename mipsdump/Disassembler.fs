@@ -135,35 +135,31 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
     | _ -> unkInstr instr
 
 let analyzeBranches (instrs: uint[]) (baseAddr: uint) (labels: Map<uint32, string>) =
-    let addLabel (instr: uint) (addr: uint) (labels: Map<uint32, string>) =
+    let addLabel instr addr (labels: Map<uint32, string>) =
         let relAddr = (imms instr + 1) <<< 2
         let absAddr = uint (addr + (uint relAddr))
         if labels.ContainsKey(absAddr) = false then
             labels.Add(uint absAddr, $"loc_{absAddr:x}")
         else labels
-    let addJumpLabel (instr: uint) (max: uint) (labels: Map<uint32, string>) =
+    let addJumpLabel instr max (labels: Map<uint32, string>) =
         let absAddr = uint ((instr &&& 0x3FFFFFFu) <<< 2) ||| 0x80000000u
         if absAddr < max && labels.ContainsKey(absAddr) = false then
             labels.Add(uint absAddr, $"sub_{absAddr:x}")
         else labels
 
     let maxAddr = baseAddr + uint instrs.Length * 4u
-    let mutable curAddr = baseAddr
-    let mutable moreLabels = labels
-    for instr in instrs do
+    let analyze labels (addr, instr) =
         let op = instr >>> 26 |> int |> enum<Op>
-        moreLabels <-
-            match op with
-            | Op.BEQ | Op.BNE | Op.BLEZ | Op.BGTZ -> addLabel instr curAddr moreLabels
-            | Op.REGIMM ->
-                let regimm = (instr >>> 16) &&& 0x1Fu |> int |> enum<Regimm>
-                match regimm with
-                | Regimm.BLTZ | Regimm.BGEZ | Regimm.BLTZAL | Regimm.BGEZAL -> addLabel instr curAddr moreLabels
-                | _ -> moreLabels
-            | Op.J | Op.JAL -> addJumpLabel instr maxAddr moreLabels
-            | _ -> moreLabels
-        curAddr <- curAddr + 4u
-    moreLabels
+        match op with
+        | Op.BEQ | Op.BNE | Op.BLEZ | Op.BGTZ -> addLabel instr addr labels
+        | Op.REGIMM ->
+            let regimm = (instr >>> 16) &&& 0x1Fu |> int |> enum<Regimm>
+            match regimm with
+            | Regimm.BLTZ | Regimm.BGEZ | Regimm.BLTZAL | Regimm.BGEZAL -> addLabel instr addr labels
+            | _ -> labels
+        | Op.J | Op.JAL -> addJumpLabel instr maxAddr labels
+        | _ -> labels
+    instrs |> Array.mapi (fun i instr -> (baseAddr + uint i * 4u, instr)) |> Array.fold analyze labels
 
 let disassembleData (instrs: uint[]) (baseAddr: uint32) (labels: Map<uint32, string>) (flags: Flags) =
     let moreLabels =
