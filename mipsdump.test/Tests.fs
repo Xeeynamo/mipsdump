@@ -258,6 +258,8 @@ let ``Use aliases`` () =
     assertAliasDisasm (NEG V0 A0) "sub\t$v0, $zero, $a0" "neg\t$v0, $a0"
     assertAliasDisasm (NEGU V0 A0) "subu\t$v0, $zero, $a0" "negu\t$v0, $a0"
     assertAliasDisasm (LIU S0 (uint16 50000)) "ori\t$s0, $zero, 0xc350" "li\t$s0, 50000"
+    assertAliasDisasm (BEQ S0 ZERO (int16 1)) "beq\t$s0, $zero, 0x4" "beqz\t$s0, 0x4"
+    assertAliasDisasm (BNE S0 ZERO (int16 1)) "bne\t$s0, $zero, 0x4" "bnez\t$s0, 0x4"
 
     assertNoAliasDisasm (LI S0 (int16 50000)) "addiu\t$s0, $zero, 50000"
     assertDisasm (LI S0 (int16 -5000)) "li\t$s0, -5000"

@@ -102,7 +102,10 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
     match op with
     | Op.SPECIAL -> special
     | Op.REGIMM -> regimm
-    | Op.BEQ | Op.BNE -> $"{strlow op}\t${strlow rs}, ${strlow rt}, {ofBranch (imms instr)}"
+    | Op.BEQ | Op.BNE ->
+        if rt = Reg.ZERO && useAlias
+        then $"{strlow op}z\t${strlow rs}, {ofBranch (imms instr)}"
+        else $"{strlow op}\t${strlow rs}, ${strlow rt}, {ofBranch (imms instr)}"
     | Op.BLEZ | Op.BGTZ -> $"{strlow op}\t${strlow rs}, {ofBranch (imms instr)}"
     | Op.LUI -> $"lui\t${strlow rt}, 0x{immu instr:X}"
     | Op.ADDIU when rs = Reg.ZERO && useAlias = true -> $"li\t${strlow rt}, {intsToString (imms instr)}"
