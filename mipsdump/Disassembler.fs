@@ -13,6 +13,7 @@ open System.IO
 type Flags =
     | None = 0
     | UseAlias = 1
+    | NoBranchAnalysis = 2
 
 let intsToString (n: int) =
     let mightBeDecimal = abs n < 16 || (n % 5) = 0 || (n % 3) = 0
@@ -150,15 +151,19 @@ let analyzeBranches (instrs: uint[]) (baseAddr: uint) (labels: Map<uint32, strin
     moreLabels
 
 let disassembleData (instrs: uint[]) (baseAddr: uint32) (labels: Map<uint32, string>) (flags: Flags) =
-    let moreLabels = analyzeBranches instrs baseAddr labels
-    let disasm (i: int) (x: uint) =
-        let addr = baseAddr + (uint i <<< 2)
-        let strDisasm = disassembleInstr x addr moreLabels flags
-        match moreLabels.TryGetValue addr with
-        | true, label -> [|$"\n{label}:"; $"\t{strDisasm}"|]
-        | false, _ -> [|$"\t{strDisasm}"|]
-
-    instrs |> Array.mapi disasm |> Array.reduce Array.append
+    let moreLabels =
+        if flags.HasFlag(Flags.NoBranchAnalysis)
+        then labels
+        else analyzeBranches instrs baseAddr labels
+    seq {
+        for i in 0..(instrs.Length - 1) do
+            let addr = baseAddr + (uint i <<< 2)
+            let strDisasm = disassembleInstr instrs[i] addr moreLabels flags
+            yield!
+                match moreLabels.TryGetValue addr with
+                | true, label -> [|$"\n{label}:"; $"\t{strDisasm}"|]
+                | false, _ -> [|$"\t{strDisasm}"|]
+    }
 
 let disassembleStream (reader: BinaryReader) (instrCount: int) (baseAddr: uint32) (labels: Map<uint32, string>) (flags: Flags) =
     disassembleData (Array.init instrCount (fun _ -> reader.ReadUInt32())) baseAddr labels flags
