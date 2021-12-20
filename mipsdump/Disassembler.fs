@@ -48,42 +48,42 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
     let special =
         let rd = (instr >>> 11) &&& 0x1Fu |> int |> enum<Reg>
         let funct = instr &&& 0x3Fu |> int |> enum<Special>
-        let shamt instr = (instr >>> 6) &&& 0x1Fu |> int
+        let shamt = (instr >>> 6) &&& 0x1Fu |> int
 
-        match (funct, rd, rs, rt) with
-        | Special.SLL, Reg.ZERO, Reg.ZERO, Reg.ZERO when useAlias && shamt instr = 0 -> "nop"
-        | Special.SUB, _, Reg.ZERO, _ when useAlias = true -> $"neg\t${strlow rd}, ${strlow rt}"
-        | Special.SUBU, _, Reg.ZERO, _ when useAlias = true -> $"negu\t${strlow rd}, ${strlow rt}"
-        | Special.OR, _, _, Reg.ZERO when useAlias = true -> $"move\t${strlow rd}, ${strlow rs}"
-        | Special.MFHI, _, Reg.ZERO, Reg.ZERO
-        | Special.MTHI, _, Reg.ZERO, Reg.ZERO
-        | Special.MFLO, _, Reg.ZERO, Reg.ZERO
-        | Special.MTLO, _, Reg.ZERO, Reg.ZERO -> $"{strlow funct}\t${strlow rd}"
-        | Special.MULT, Reg.ZERO, _, _
-        | Special.MULTU, Reg.ZERO, _, _
-        | Special.DIV, Reg.ZERO, _, _
-        | Special.DIVU, Reg.ZERO, _, _ -> $"{strlow funct}\t${strlow rs}, ${strlow rt}"
-        | Special.SLL, _, Reg.ZERO, _
-        | Special.SRL, _, Reg.ZERO, _
-        | Special.SRA, _, Reg.ZERO, _ -> $"{strlow funct}\t${strlow rd}, ${strlow rt}, {shamt instr}"
-        | Special.ADD, _, _, _
-        | Special.SUB, _, _, _
-        | Special.ADDU, _, _, _
-        | Special.SUBU, _, _, _
-        | Special.AND, _, _, _
-        | Special.OR, _, _, _
-        | Special.XOR, _, _, _
-        | Special.NOR, _, _, _
-        | Special.SLT, _, _, _
-        | Special.SLTU, _, _, _ -> $"{strlow funct}\t${strlow rd}, ${strlow rs}, ${strlow rt}"
-        | Special.SLLV, _, _, _
-        | Special.SRAV, _, _, _
-        | Special.SRLV, _, _, _ -> $"{strlow funct}\t${strlow rd}, ${strlow rt}, ${strlow rs}"
-        | Special.JR, Reg.ZERO, _, Reg.ZERO
-        | Special.JALR, Reg.ZERO, _, Reg.ZERO -> $"{strlow funct}\t${strlow rs}"
-        | Special.SYSCALL, _, _, _ -> $"syscall\t0x{instr >>> 6:X}"
-        | Special.BREAK, _, _, _ -> $"break\t0x{instr >>> 16:X}"
-        | _, _, _, _ -> unkInstr instr
+        match (funct, rd, rs, rt, shamt) with
+        | Special.SLL, Reg.ZERO, Reg.ZERO, Reg.ZERO, 0 when useAlias -> "nop"
+        | Special.SUB, _, Reg.ZERO, _, 0 when useAlias = true -> $"neg\t${strlow rd}, ${strlow rt}"
+        | Special.SUBU, _, Reg.ZERO, _, 0 when useAlias = true -> $"negu\t${strlow rd}, ${strlow rt}"
+        | Special.OR, _, _, Reg.ZERO, 0 when useAlias = true -> $"move\t${strlow rd}, ${strlow rs}"
+        | Special.MFHI, _, Reg.ZERO, Reg.ZERO, 0
+        | Special.MTHI, _, Reg.ZERO, Reg.ZERO, 0
+        | Special.MFLO, _, Reg.ZERO, Reg.ZERO, 0
+        | Special.MTLO, _, Reg.ZERO, Reg.ZERO, 0 -> $"{strlow funct}\t${strlow rd}"
+        | Special.MULT, Reg.ZERO, _, _, 0
+        | Special.MULTU, Reg.ZERO, _, _, 0 -> $"{strlow funct}\t${strlow rs}, ${strlow rt}"
+        | Special.DIV, Reg.ZERO, _, _, 0
+        | Special.DIVU, Reg.ZERO, _, _, 0 -> $"{strlow funct}\t$zero, ${strlow rs}, ${strlow rt}"
+        | Special.SLL, _, Reg.ZERO, _, _
+        | Special.SRL, _, Reg.ZERO, _, _
+        | Special.SRA, _, Reg.ZERO, _, _ -> $"{strlow funct}\t${strlow rd}, ${strlow rt}, {shamt}"
+        | Special.ADD, _, _, _, 0
+        | Special.SUB, _, _, _, 0
+        | Special.ADDU, _, _, _, 0
+        | Special.SUBU, _, _, _, 0
+        | Special.AND, _, _, _, 0
+        | Special.OR, _, _, _, 0
+        | Special.XOR, _, _, _, 0
+        | Special.NOR, _, _, _, 0
+        | Special.SLT, _, _, _, 0
+        | Special.SLTU, _, _, _, 0 -> $"{strlow funct}\t${strlow rd}, ${strlow rs}, ${strlow rt}"
+        | Special.SLLV, _, _, _, 0
+        | Special.SRAV, _, _, _, 0
+        | Special.SRLV, _, _, _, 0 -> $"{strlow funct}\t${strlow rd}, ${strlow rt}, ${strlow rs}"
+        | Special.JR, Reg.ZERO, _, Reg.ZERO, 0
+        | Special.JALR, Reg.ZERO, _, Reg.ZERO, 0 -> $"{strlow funct}\t${strlow rs}"
+        | Special.SYSCALL, _, _, _, _ -> $"syscall\t0x{instr >>> 6:X}"
+        | Special.BREAK, _, _, _, _ -> $"break\t0x{instr >>> 16:X}"
+        | _, _, _, _, _ -> unkInstr instr
     let regimm =
         let regimm = rt |> int |> enum<Regimm>
         match regimm with

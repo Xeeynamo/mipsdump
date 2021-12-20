@@ -171,7 +171,6 @@ let ``Basic instructions`` () =
     assertDisasm (XORI V0 A0 (uint16 3)) "xori\t$v0, $a0, 0x3"
     assertDisasm(LUI S0 (uint16 100)) "lui\t$s0, 0x64"
 
-
 [<Fact>]
 let ``Instructions with pointer`` () =
     assertDisasm (LB V0 S0 (int16 100)) "lb\t$v0, 0x64($s0)"
@@ -217,7 +216,6 @@ let ``Coprocessor instructions`` () =
     assertDisasm (COP1 0x80000u) "cop1\t0x80000"
     assertDisasm (COP2 0x1FFFFFFu) "cop2\t0x1ffffff"
     assertDisasm (COP3 0x2000000u) "cop3\t0x0"
-    assertDisasm 0x45584520u ".word 0x45584520"
 
 [<Fact>]
 let ``Jump instructions`` () =
@@ -290,6 +288,8 @@ let ``Analyze jumps and disassemble`` () =
 [<Fact>]
 let ``Unknown instructions`` () =
     assertDisasm 0xffffffffu ".word 0xffffffff"
+    assertDisasm 0x45584520u ".word 0x45584520"
+    assertDisasm 0x000a2964u ".word 0x000a2964"
 
 [<Theory>]
 [<InlineData(1, "1")>]
