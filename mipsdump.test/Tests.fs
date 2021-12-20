@@ -274,6 +274,17 @@ let ``Analyze branches and disassemble`` () =
     Assert.Equal("\tnop\n\nloc_80010004:\n\tblez\t$a0, loc_80010004", disasm)
 
 [<Fact>]
+let ``Analyze jumps and disassemble`` () =
+    let data = [|
+        NOP
+        J (0x80010000u >>> 2)
+    |]
+    let disasm =
+        (disassembleData data 0x80010000u Map.empty Flags.UseAlias)
+        |> String.concat "\n"
+    Assert.Equal("\nsub_80010000:\n\tnop\n\tj\tsub_80010000", disasm)
+
+[<Fact>]
 let ``Unknown instructions`` () =
     assertDisasm 0xffffffffu ".word 0xffffffff"
 
