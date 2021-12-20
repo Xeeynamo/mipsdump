@@ -102,28 +102,35 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
             then $"cop{cop}\t0x{instr &&& 0x1FFFFFFu:x}"
             else unkInstr instr
 
-    match op with
-    | Op.SPECIAL -> special
-    | Op.REGIMM -> regimm
-    | Op.BEQ | Op.BNE ->
-        if rt = Reg.ZERO && useAlias
-        then $"{strlow op}z\t${strlow rs}, {ofBranch (imms instr)}"
-        else $"{strlow op}\t${strlow rs}, ${strlow rt}, {ofBranch (imms instr)}"
-    | Op.BLEZ | Op.BGTZ -> $"{strlow op}\t${strlow rs}, {ofBranch (imms instr)}"
-    | Op.LUI -> $"lui\t${strlow rt}, 0x{immu instr:X}"
-    | Op.ADDIU when rs = Reg.ZERO && useAlias = true -> $"li\t${strlow rt}, {intsToString (imms instr)}"
-    | Op.ORI when rs = Reg.ZERO && useAlias = true -> $"li\t${strlow rt}, {intuToString (immu instr)}"
-    | Op.ADDI | Op.SLTI -> $"{strlow op}\t${strlow rt}, ${strlow rs}, {intsToString (imms instr)}"
-    | Op.ADDIU | Op.SLTIU -> $"{strlow op}\t${strlow rt}, ${strlow rs}, {intuToString (immu instr)}"
-    | Op.ANDI | Op.ORI | Op.XORI -> $"{strlow op}\t${strlow rt}, ${strlow rs}, 0x{immu instr:x}"
-    | Op.LB | Op.LH | Op.LWL | Op.LW | Op.LBU | Op.LHU | Op.LWR
-    | Op.SB | Op.SH | Op.SWL | Op.SW | Op.SWR ->
+    match (op, rs, rt) with
+    | Op.SPECIAL, _, _ -> special
+    | Op.REGIMM, _, _ -> regimm
+    | Op.BEQ, _, Reg.ZERO
+    | Op.BNE, _, Reg.ZERO when useAlias = true -> $"{strlow op}z\t${strlow rs}, {ofBranch (imms instr)}"
+    | Op.BEQ, _, _
+    | Op.BNE, _, _ -> $"{strlow op}\t${strlow rs}, ${strlow rt}, {ofBranch (imms instr)}"
+    | Op.BLEZ, _, Reg.ZERO
+    | Op.BGTZ, _, Reg.ZERO -> $"{strlow op}\t${strlow rs}, {ofBranch (imms instr)}"
+    | Op.LUI, Reg.ZERO, _ -> $"lui\t${strlow rt}, 0x{immu instr:X}"
+    | Op.ADDIU, Reg.ZERO, _ when useAlias = true -> $"li\t${strlow rt}, {intsToString (imms instr)}"
+    | Op.ORI, Reg.ZERO, _ when useAlias = true -> $"li\t${strlow rt}, {intuToString (immu instr)}"
+    | Op.ADDI, _, _
+    | Op.SLTI, _, _ -> $"{strlow op}\t${strlow rt}, ${strlow rs}, {intsToString (imms instr)}"
+    | Op.ADDIU, _, _
+    | Op.SLTIU, _, _ -> $"{strlow op}\t${strlow rt}, ${strlow rs}, {intuToString (immu instr)}"
+    | Op.ANDI, _, _
+    | Op.ORI, _, _
+    | Op.XORI, _, _ -> $"{strlow op}\t${strlow rt}, ${strlow rs}, 0x{immu instr:x}"
+    | Op.LB, _, _ | Op.LH, _, _ | Op.LWL, _, _ | Op.LW, _, _
+    | Op.LBU, _, _ | Op.LHU, _, _ | Op.LWR, _, _
+    | Op.SB, _, _ | Op.SH, _, _ | Op.SWL, _, _ | Op.SW, _, _ | Op.SWR, _, _ ->
         $"{strlow op}\t${strlow rt}, {hexp (imms instr)}(${strlow rs})"
-    | Op.J | Op.JAL -> $"{strlow op}\t{ofLabel (((instr &&& 0x3FFFFFFu) <<< 2) ||| 0x80000000u)}"
-    | Op.LWC0 | Op.LWC1 | Op.LWC2| Op.LWC3
-    | Op.SWC0 | Op.SWC1 | Op.SWC2| Op.SWC3 ->
+    | Op.J, _, _
+    | Op.JAL, _, _ -> $"{strlow op}\t{ofLabel (((instr &&& 0x3FFFFFFu) <<< 2) ||| 0x80000000u)}"
+    | Op.LWC0, _, _ | Op.LWC1, _, _ | Op.LWC2, _, _ | Op.LWC3, _, _
+    | Op.SWC0, _, _ | Op.SWC1, _, _ | Op.SWC2, _, _ | Op.SWC3, _, _ ->
         $"{strlow op}\t${int rt}, {hexp (imms instr)}(${strlow rs})"
-    | Op.C0 | Op.C1 | Op.C2 | Op.C3 -> cop
+    | Op.C0, _, _ | Op.C1, _, _ | Op.C2, _, _ | Op.C3, _, _ -> cop
     | _ -> unkInstr instr
 
 let analyzeBranches (instrs: uint[]) (baseAddr: uint) (labels: Map<uint32, string>) =

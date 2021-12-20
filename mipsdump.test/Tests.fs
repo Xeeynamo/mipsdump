@@ -290,6 +290,7 @@ let ``Unknown instructions`` () =
     assertDisasm 0xffffffffu ".word 0xffffffff"
     assertDisasm 0x45584520u ".word 0x45584520"
     assertDisasm 0x000a2964u ".word 0x000a2964"
+    assertDisasm 0x3d657571u ".word 0x3d657571"
 
 [<Theory>]
 [<InlineData(1, "1")>]
