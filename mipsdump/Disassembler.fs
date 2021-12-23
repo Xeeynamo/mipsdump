@@ -45,7 +45,7 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
     let rt = (instr >>> 16) &&& 0x1Fu |> int |> enum<Reg>
     let useAlias = flags.HasFlag(Flags.UseAlias)
 
-    let special =
+    let special instr =
         let rd = (instr >>> 11) &&& 0x1Fu |> int |> enum<Reg>
         let funct = instr &&& 0x3Fu |> int |> enum<Special>
         let shamt = (instr >>> 6) &&& 0x1Fu |> int
@@ -84,13 +84,13 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
         | Special.SYSCALL, _, _, _, _ -> $"syscall\t0x{instr >>> 6:X}"
         | Special.BREAK, _, _, _, _ -> $"break\t0x{(instr >>> 16) &&& 0x3ffu:x}, 0x{(instr >>> 6) &&& 0x3ffu:x}"
         | _, _, _, _, _ -> unkInstr instr
-    let regimm =
+    let regimm instr =
         let regimm = rt |> int |> enum<Regimm>
         match regimm with
         | Regimm.BLTZ | Regimm.BGEZ | Regimm.BLTZAL | Regimm.BGEZAL ->
             $"{strlow regimm}\t${strlow rs}, {ofBranch (imms instr)}"
         | _ -> unkInstr instr
-    let cop =
+    let cop instr =
         let cop = uint op &&& 3u
         let zzz = instr &&& 0x7ffu
         match (rs |> int |> enum<Cop>, zzz) with
@@ -104,8 +104,8 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
             else unkInstr instr
 
     match (op, rs, rt) with
-    | Op.SPECIAL, _, _ -> special
-    | Op.REGIMM, _, _ -> regimm
+    | Op.SPECIAL, _, _ -> special instr
+    | Op.REGIMM, _, _ -> regimm instr
     | Op.BEQ, _, Reg.ZERO
     | Op.BNE, _, Reg.ZERO when useAlias = true -> $"{strlow op}z\t${strlow rs}, {ofBranch (imms instr)}"
     | Op.BEQ, _, _
@@ -131,7 +131,7 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
     | Op.LWC0, _, _ | Op.LWC1, _, _ | Op.LWC2, _, _ | Op.LWC3, _, _
     | Op.SWC0, _, _ | Op.SWC1, _, _ | Op.SWC2, _, _ | Op.SWC3, _, _ ->
         $"{strlow op}\t${int rt}, {hexp (imms instr)}(${strlow rs})"
-    | Op.C0, _, _ | Op.C1, _, _ | Op.C2, _, _ | Op.C3, _, _ -> cop
+    | Op.C0, _, _ | Op.C1, _, _ | Op.C2, _, _ | Op.C3, _, _ -> cop instr
     | _ -> unkInstr instr
 
 let analyzeBranches (instrs: uint[]) (baseAddr: uint) (labels: Map<uint32, string>) =
