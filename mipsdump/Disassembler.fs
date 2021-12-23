@@ -24,9 +24,12 @@ let intuToString (n: uint) =
     if mightBeDecimal then n.ToString() else $"0x{n:X}"
 let imms instr = int (int16 (instr &&& 0xffffu))
 let immu instr = uint (uint16 (instr &&& 0xffffu))
+let op instr = instr >>> 26 |> int |> enum<Op>
+let rs instr = (instr >>> 21) &&& 0x1Fu |> int |> enum<Reg>
+let rt instr = (instr >>> 16) &&& 0x1Fu |> int |> enum<Reg>
+let strlow (value: Enum) = (string value).ToLower()
 
 let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (flags: Flags) =
-    let strlow (value: Enum) = (string value).ToLower()
     let unkInstr instr = $".word 0x{instr:x08}"
     let hexs (value:int) = if value >= 0 then $"0x{value:x}" else $"-0x{-value:x}"
     let hexp (value:int) = if value = 0 then "" else hexs value
@@ -40,9 +43,9 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
         match labels.TryGetValue(addr) with
         | true, label -> label
         | false, _ -> $"0x{addr:x08}"
-    let op = instr >>> 26 |> int |> enum<Op>
-    let rs = (instr >>> 21) &&& 0x1Fu |> int |> enum<Reg>
-    let rt = (instr >>> 16) &&& 0x1Fu |> int |> enum<Reg>
+    let op = op instr
+    let rs = rs instr
+    let rt = rt instr
     let useAlias = flags.HasFlag(Flags.UseAlias)
 
     let special instr =
@@ -134,15 +137,35 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
     | Op.C0, _, _ | Op.C1, _, _ | Op.C2, _, _ | Op.C3, _, _ -> cop instr
     | _ -> unkInstr instr
 
+let (|LI|_|) (instrs: uint[], index: int, addr: uint, labels: Map<uint32, string>) =
+    if index + 1 >= instrs.Length then None else
+    if labels.ContainsKey(addr + 4u) then None else
+    if op instrs[index] <> Op.LUI then None else
+    let rtLui = rt instrs[index]
+    let instr = instrs[index + 1]
+    let rt = rt instr
+    let rs = rs instr
+    match op instr with
+    | Op.ORI ->
+        if (rt = Reg.ZERO && rtLui = rs) || (rs = Reg.ZERO && rtLui = rt) || (rtLui = rt && rt = rs)
+        then Some $"li\t${strlow rtLui}, 0x{immu instrs[index]:x}{immu instr:x04}"
+        else None
+    | _ -> None
+
 let rec disassembleInternal (instrs: uint[]) (index: int) (addr: uint32) (labels: Map<uint32, string>) (flags: Flags) =
     seq {
+        match labels.TryGetValue addr with
+        | true, label -> yield $"\n{label}:"
+        | false, _ -> ()
+
         if index >= instrs.Length then () else
-        let strDisasm = disassembleInstr instrs[index] addr labels flags
-        yield!
-            match labels.TryGetValue addr with
-            | true, label -> [|$"\n{label}:"; $"\t{strDisasm}"|]
-            | false, _ -> [|$"\t{strDisasm}"|]
-        yield! disassembleInternal instrs (index + 1) (addr + 4u) labels flags
+        match (instrs, index, addr, labels) with
+        | LI disasm ->
+            yield $"\t{disasm}"
+            yield! disassembleInternal instrs (index + 2) (addr + 8u) labels flags
+        | _ ->
+            yield $"\t{disassembleInstr instrs[index] addr labels flags}"
+            yield! disassembleInternal instrs (index + 1) (addr + 4u) labels flags
     }
 
 let analyzeBranches (instrs: uint[]) (baseAddr: uint) (labels: Map<uint32, string>) =

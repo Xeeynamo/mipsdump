@@ -289,6 +289,40 @@ let ``Analyze jumps and disassemble`` () =
     Assert.Equal("\nsub_80010000:\n\tnop\n\tj\tsub_80010000", disasm)
 
 [<Fact>]
+let ``Simplified Load Immediate alias`` () =
+    let assertLi op expected =
+        let data = [|LUI V0 (uint16 0x1234); op|]
+        let disasm =
+            (disassembleData data 0u Map.empty Flags.UseAlias)
+            |> String.concat "\n"
+        Assert.Equal(expected, disasm)
+    assertLi (ORI ZERO V0 (uint16 0x0678)) "\tli\t$v0, 0x12340678"
+    assertLi (ORI V0 ZERO (uint16 0x0678)) "\tli\t$v0, 0x12340678"
+    assertLi (ORI V0 V0 (uint16 0x0678)) "\tli\t$v0, 0x12340678"
+    assertLi (ORI ZERO V1 (uint16 0x5678)) "\tlui\t$v0, 0x1234\n\tori\t$zero, $v1, 0x5678"
+    assertLi (ORI V1 ZERO (uint16 0x5678)) "\tlui\t$v0, 0x1234\n\tli\t$v1, 0x5678"
+    assertLi (ORI V1 V1 (uint16 0x5678)) "\tlui\t$v0, 0x1234\n\tori\t$v1, $v1, 0x5678"
+
+[<Fact>]
+let ``Do not simplify to Load Immediate when a label is between the two instructions`` () =
+    let data = [|
+        BNE A0 A1 (int16 1)
+        LUI V0 (uint16 0x1234)
+        ORI V0 V0 (uint16 0x0678)
+    |]
+    let disasm =
+        (disassembleData data 0x80010000u Map.empty Flags.UseAlias)
+        |> String.concat "\n"
+    let expected = [|
+        "\tbne\t$a0, $a1, loc_80010008"
+        "\tlui\t$v0, 0x1234"
+        ""
+        "loc_80010008:"
+        "\tori\t$v0, $v0, 0x678"
+    |]
+    Assert.Equal(expected |> String.concat "\n", disasm)
+
+[<Fact>]
 let ``Unknown instructions`` () =
     assertDisasm 0xffffffffu ".word 0xffffffff"
     assertDisasm 0x45584520u ".word 0x45584520"
