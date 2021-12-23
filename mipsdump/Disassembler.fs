@@ -137,7 +137,7 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
     | Op.C0, _, _ | Op.C1, _, _ | Op.C2, _, _ | Op.C3, _, _ -> cop instr
     | _ -> unkInstr instr
 
-let (|LI|_|) (instrs: uint[], index: int, addr: uint, labels: Map<uint32, string>) =
+let (|IsAlias|_|) (instrs: uint[], index: int, addr: uint, labels: Map<uint32, string>) =
     if index + 1 >= instrs.Length then None else
     if labels.ContainsKey(addr + 4u) then None else
     if op instrs[index] <> Op.LUI then None else
@@ -145,11 +145,20 @@ let (|LI|_|) (instrs: uint[], index: int, addr: uint, labels: Map<uint32, string
     let instr = instrs[index + 1]
     let rt = rt instr
     let rs = rs instr
-    match op instr with
+    let op = op instr
+    match op with
     | Op.ORI ->
         if (rt = Reg.ZERO && rtLui = rs) || (rs = Reg.ZERO && rtLui = rt) || (rtLui = rt && rt = rs)
         then Some $"li\t${strlow rtLui}, 0x{immu instrs[index]:x}{immu instr:x04}"
         else None
+    | Op.LB | Op.LH | Op.LW | Op.SB | Op.SH | Op.SW ->
+        if rs <> rtLui || rtLui = Reg.AT then None else
+        let imm = uint ((int (immu instrs[index]) <<< 16) + (imms instr))
+        let disasm =
+            match labels.TryGetValue imm with
+            | true, label -> $"{strlow op}\t${strlow rt}, {label}"
+            | false, _ -> $"{strlow op}\t${strlow rt}, 0x{imm:x}"
+        Some disasm
     | _ -> None
 
 let rec disassembleInternal (instrs: uint[]) (index: int) (addr: uint32) (labels: Map<uint32, string>) (flags: Flags) =
@@ -160,7 +169,7 @@ let rec disassembleInternal (instrs: uint[]) (index: int) (addr: uint32) (labels
 
         if index >= instrs.Length then () else
         match (instrs, index, addr, labels) with
-        | LI disasm ->
+        | IsAlias disasm ->
             yield $"\t{disasm}"
             yield! disassembleInternal instrs (index + 2) (addr + 8u) labels flags
         | _ ->

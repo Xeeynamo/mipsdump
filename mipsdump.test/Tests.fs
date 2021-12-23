@@ -323,6 +323,25 @@ let ``Do not simplify to Load Immediate when a label is between the two instruct
     Assert.Equal(expected |> String.concat "\n", disasm)
 
 [<Fact>]
+let ``Simplified Load/Save Byte/Half/Word`` () =
+    let labels = [|(0x80034444u, "dword_80034444")|] |> Map.ofArray
+    let assertPointer op expected =
+        let data = [|LUI V0 (uint16 0x8003); op|]
+        let disasm =
+            (disassembleData data 0u labels Flags.UseAlias)
+            |> String.concat "\n"
+        Assert.Equal(expected, disasm)
+    assertPointer (LW A0 V1 (int16 +0x1234)) "\tlui\t$v0, 0x8003\n\tlw\t$a0, 0x1234($v1)"
+    assertPointer (LW A0 V0 (int16 +0x1234)) "\tlw\t$a0, 0x80031234"
+    assertPointer (LW A0 V0 (int16 -0x2c60)) "\tlw\t$a0, 0x8002d3a0"
+    assertPointer (LW A0 V0 (int16 +0x4444)) "\tlw\t$a0, dword_80034444"
+    assertPointer (LB A0 V0 (int16 +0x4444)) "\tlb\t$a0, dword_80034444"
+    assertPointer (LH A0 V0 (int16 +0x4444)) "\tlh\t$a0, dword_80034444"
+    assertPointer (SB A0 V0 (int16 +0x4444)) "\tsb\t$a0, dword_80034444"
+    assertPointer (SH A0 V0 (int16 +0x4444)) "\tsh\t$a0, dword_80034444"
+    assertPointer (SW A0 V0 (int16 +0x4444)) "\tsw\t$a0, dword_80034444"
+
+[<Fact>]
 let ``Unknown instructions`` () =
     assertDisasm 0xffffffffu ".word 0xffffffff"
     assertDisasm 0x45584520u ".word 0x45584520"
