@@ -29,16 +29,26 @@ let asString (str:string) =
         None
 
 let parseLabels (content:string[]) =
-    let (|HasLabel|_|) (tokens:string[]) =
+    let (|SetName|_|) (tokens:string[]) =
         if tokens.Length < 3 then None else
         match (tokens[0], asDigit tokens[1], asString tokens[2]) with
         | "set_name", Some addr, Some label -> Some (addr, label)
         | _, _, _ -> None
+    let (|CreateData|_|) (tokens:string[]) =
+        if tokens.Length < 2 then None else
+        match (tokens[0], asDigit tokens[1]) with
+        | "create_dword", Some addr -> Some (addr, $"word_{addr:x08}")
+        | "create_word", Some addr -> Some (addr, $"half_{addr:x08}")
+        | "create_byte", Some addr -> Some (addr, $"byte_{addr:x08}")
+        | "make_array", Some addr -> Some (addr, $"array_{addr:x08}")
+        | "create_strlit", Some addr -> Some (addr, $"asc_{addr:x08}")
+        | _, _ -> None
     let parseIdcLine (line:string) =
         let tokens =
             line.Split('\t', ' ', ',', '(', ')', ';')
             |> Array.filter(fun token -> token.Length > 0)
         match tokens with
-        | HasLabel (addr, label) -> Some (addr, label)
+        | SetName (addr, label) -> Some (addr, label)
+        | CreateData (addr, label) -> Some (addr, label)
         | _ -> None
     content |> Array.choose parseIdcLine |> Map.ofArray
