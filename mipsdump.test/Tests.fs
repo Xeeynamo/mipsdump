@@ -129,7 +129,8 @@ let ``Assemble instructions`` () =
 
 let labels = [|(0x80010df4u, "TestFunction")|] |> Map.ofArray
 let assertDisasm (instr: uint) (expected: string) =
-    Assert.Equal(expected, disassembleInstr instr 0u labels Flags.UseAlias)
+    let actual = disassembleInstr instr 0u labels Flags.UseAlias
+    Assert.Equal(expected, actual)
 
 [<Fact>]
 let ``Basic instructions`` () =
@@ -248,7 +249,8 @@ let ``Branch instructions`` () =
 [<Fact>]
 let ``Use aliases`` () =
     let assertNoAliasDisasm (instr: uint) (expected: string) =
-        Assert.Equal(expected, disassembleInstr instr 0u Map.empty Flags.None)
+        let actual = disassembleInstr instr 0u Map.empty Flags.None
+        Assert.Equal(expected, actual)
     let assertAliasDisasm (instr: uint) (expectedNoAlias: string) (expectedAlias: string) =
         assertNoAliasDisasm instr expectedNoAlias
         assertDisasm instr expectedAlias

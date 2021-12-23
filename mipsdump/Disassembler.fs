@@ -134,6 +134,17 @@ let disassembleInstr (instr: uint) (addr: uint) (labels: Map<uint32, string>) (f
     | Op.C0, _, _ | Op.C1, _, _ | Op.C2, _, _ | Op.C3, _, _ -> cop instr
     | _ -> unkInstr instr
 
+let rec disassembleInternal (instrs: uint[]) (index: int) (addr: uint32) (labels: Map<uint32, string>) (flags: Flags) =
+    seq {
+        if index >= instrs.Length then () else
+        let strDisasm = disassembleInstr instrs[index] addr labels flags
+        yield!
+            match labels.TryGetValue addr with
+            | true, label -> [|$"\n{label}:"; $"\t{strDisasm}"|]
+            | false, _ -> [|$"\t{strDisasm}"|]
+        yield! disassembleInternal instrs (index + 1) (addr + 4u) labels flags
+    }
+
 let analyzeBranches (instrs: uint[]) (baseAddr: uint) (labels: Map<uint32, string>) =
     let addLabel instr addr (labels: Map<uint32, string>) =
         let relAddr = (imms instr + 1) <<< 2
@@ -166,15 +177,7 @@ let disassembleData (instrs: uint[]) (baseAddr: uint32) (labels: Map<uint32, str
         if flags.HasFlag(Flags.NoBranchAnalysis)
         then labels
         else analyzeBranches instrs baseAddr labels
-    seq {
-        for i in 0..(instrs.Length - 1) do
-            let addr = baseAddr + (uint i <<< 2)
-            let strDisasm = disassembleInstr instrs[i] addr moreLabels flags
-            yield!
-                match moreLabels.TryGetValue addr with
-                | true, label -> [|$"\n{label}:"; $"\t{strDisasm}"|]
-                | false, _ -> [|$"\t{strDisasm}"|]
-    }
+    disassembleInternal instrs 0 baseAddr moreLabels flags
 
 let disassembleStream (reader: BinaryReader) (instrCount: int) (baseAddr: uint32) (labels: Map<uint32, string>) (flags: Flags) =
     disassembleData (Array.init instrCount (fun _ -> reader.ReadUInt32())) baseAddr labels flags
